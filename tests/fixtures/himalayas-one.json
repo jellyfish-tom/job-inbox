@@ -1,0 +1,16 @@
+{
+  "title": "Senior Frontend Engineer",
+  "companyName": "Acme",
+  "guid": "https://himalayas.app/companies/acme/jobs/senior-frontend-engineer",
+  "applicationLink": "https://himalayas.app/companies/acme/jobs/senior-frontend-engineer",
+  "minSalary": 80000,
+  "maxSalary": 120000,
+  "currency": "USD",
+  "categories": ["React", "TypeScript"],
+  "parentCategories": ["Software-Engineering"],
+  "description": "React TypeScript remote",
+  "pubDate": "2026-08-28T00:00:00.000Z",
+  "locationRestrictions": ["Poland", "Germany"],
+  "timezoneRestrictions": [1, 2],
+  "seniority": ["Senior"]
+}
