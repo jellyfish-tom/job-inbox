@@ -10,6 +10,8 @@ type RemoteokRaw = {
   date?: string;
   salary_min?: number;
   salary_max?: number;
+  description?: string;
+  location?: string;
 };
 
 const LISTINGS_URL = "https://remoteok.com/api";
@@ -35,6 +37,9 @@ export function normalize(raw: unknown): NormalizedJob {
     title: item.position,
     company: item.company ?? "",
     track: "A",
+    description: item.description ?? "",
+    location: item.location ?? "",
+    contractType: null,
     salaryMin: null,
     salaryMax: null,
     salaryCurrency: null,

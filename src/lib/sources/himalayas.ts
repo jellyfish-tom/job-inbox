@@ -10,6 +10,8 @@ type HimalayasRaw = {
   maxSalary?: number;
   currency?: string;
   categories?: string[];
+  description?: string;
+  locationRestrictions?: string[];
   pubDate?: string;
 };
 
@@ -31,6 +33,9 @@ export function normalize(raw: unknown): NormalizedJob {
     title,
     company: item.companyName ?? "",
     track: "A",
+    description: item.description ?? "",
+    location: (item.locationRestrictions ?? []).join(" "),
+    contractType: null,
     salaryMin: item.minSalary ?? null,
     salaryMax: item.maxSalary ?? null,
     salaryCurrency: item.currency ?? null,

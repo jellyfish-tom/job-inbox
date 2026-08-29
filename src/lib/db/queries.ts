@@ -2,7 +2,10 @@ import { getDb } from "@/lib/db/client";
 import { normalizeUrl } from "@/lib/url";
 import type { JobStatus, NormalizedJob, SourceId } from "@/types/job";
 
-export type JobRow = NormalizedJob & {
+export type JobRow = Omit<
+  NormalizedJob,
+  "description" | "location" | "contractType"
+> & {
   id: string;
   status: JobStatus;
   appliedAt: string | null;

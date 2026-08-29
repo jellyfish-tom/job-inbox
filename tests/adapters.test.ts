@@ -85,3 +85,31 @@ test("registry returns six adapters and rejects unknown", () => {
   }
   expect(() => getAdapter("linkedin" as never)).toThrow(/unknown source/);
 });
+
+test("himalayas populates filter fields from description and locationRestrictions", () => {
+  const job = normalizeHimalayas(JSON.parse(fx("himalayas-one.json")));
+  expect(job.description).toBe("React TypeScript remote");
+  expect(job.location).toBe("Poland Germany");
+  expect(job.contractType).toBeNull();
+});
+
+test("remoteok populates description", () => {
+  const job = normalizeRemoteok(JSON.parse(fx("remoteok-one.json")));
+  expect(job.description).toBe("React TypeScript");
+});
+
+test("wwr populates description from RSS body", () => {
+  const items = parseRssItems(fx("wwr-sample.xml"));
+  expect(normalizeWwr(items[0]).description).toBe("React TypeScript remote CET");
+});
+
+test("justjoin maps workplaceType and contract into filter fields", () => {
+  const job = normalizeJustjoin(JSON.parse(fx("justjoin-one.json")));
+  expect(job.location).toBe("remote Poland");
+  expect(job.contractType).toBe("b2b");
+});
+
+test("nofluff marks fully-remote Polish listings", () => {
+  const job = normalizeNofluff(JSON.parse(fx("nofluff-one.json")));
+  expect(job.location).toBe("remote Poland");
+});

@@ -14,6 +14,7 @@ type JustjoinRaw = {
     currency?: string;
   }[];
   publishedAt?: string;
+  workplaceType?: string;
 };
 
 const PRIMARY_URL = "https://justjoin.it/api/offers";
@@ -34,6 +35,9 @@ export function normalize(raw: unknown): NormalizedJob {
     title: item.title,
     company: item.companyName ?? "",
     track: "B",
+    description: "",
+    location: [item.workplaceType ?? "", "Poland"].join(" ").trim(),
+    contractType: employment?.type ?? null,
     salaryMin: employment?.from ?? null,
     salaryMax: employment?.to ?? null,
     salaryCurrency: employment?.currency ?? null,

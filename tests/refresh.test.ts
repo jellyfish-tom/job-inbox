@@ -30,6 +30,9 @@ function goodJob(): NormalizedJob {
     title: "Senior Frontend Engineer",
     company: "Acme",
     track: "A",
+    description: "React TypeScript remote CET",
+    location: "",
+    contractType: null,
     salaryMin: 100000,
     salaryMax: 150000,
     salaryCurrency: "USD",
@@ -38,10 +41,7 @@ function goodJob(): NormalizedJob {
     hardNice: ["React"],
     softRequired: [],
     softNice: [],
-    rawJson: JSON.stringify({
-      id: "good-1",
-      description: "React TypeScript remote CET",
-    }),
+    rawJson: JSON.stringify({ id: "good-1" }),
     postedAt: "2026-08-28T00:00:00.000Z",
   };
 }
@@ -51,10 +51,8 @@ function hybridJob(): NormalizedJob {
     ...goodJob(),
     externalId: "hybrid-1",
     url: "https://remoteok.com/remote-jobs/hybrid",
-    rawJson: JSON.stringify({
-      id: "hybrid-1",
-      description: "hybrid 3 days in office",
-    }),
+    description: "hybrid 3 days in office",
+    rawJson: JSON.stringify({ id: "hybrid-1" }),
   };
 }
 
@@ -93,6 +91,9 @@ test("second fetch does not clobber applied notes", async () => {
     title,
     company: "Acme",
     track: "A",
+    description: "React TypeScript remote CET",
+    location: "",
+    contractType: null,
     salaryMin: null,
     salaryMax: null,
     salaryCurrency: null,
@@ -102,7 +103,7 @@ test("second fetch does not clobber applied notes", async () => {
     softRequired: [],
     softNice: [],
     rawJson: JSON.stringify({
-      description: "React TypeScript remote CET",
+      id: "applied-test",
     }),
     postedAt: "2026-08-28T00:00:00.000Z",
   });

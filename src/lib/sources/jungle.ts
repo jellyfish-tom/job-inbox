@@ -9,6 +9,8 @@ type JungleRaw = {
   published_at?: string;
   skills?: string[];
   contract_type?: string;
+  description?: string;
+  workplace_type?: string;
 };
 
 type JobPostingLd = {
@@ -20,6 +22,8 @@ type JobPostingLd = {
   datePosted?: string;
   skills?: string | string[];
   employmentType?: string;
+  description?: string;
+  jobLocationType?: string;
 };
 
 const LISTINGS_URL =
@@ -92,6 +96,8 @@ function toJungleRaw(posting: JobPostingLd): JungleRaw {
     published_at: posting.datePosted,
     skills: skillList,
     contract_type: posting.employmentType,
+    description: posting.description,
+    workplace_type: posting.jobLocationType,
   };
 }
 
@@ -109,6 +115,9 @@ export function normalize(raw: unknown): NormalizedJob {
     title: item.name,
     company: item.company?.name ?? "",
     track: "A",
+    description: item.description ?? "",
+    location: item.workplace_type ?? "",
+    contractType: item.contract_type ?? null,
     salaryMin: null,
     salaryMax: null,
     salaryCurrency: null,

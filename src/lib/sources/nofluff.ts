@@ -9,6 +9,7 @@ type NofluffRaw = {
   skills?: { must?: string[]; nice?: string[] };
   posted?: string;
   url?: string;
+  remote?: string;
 };
 
 const LISTINGS_URL = "https://nofluffjobs.com/api/search/posting";
@@ -26,6 +27,9 @@ export function normalize(raw: unknown): NormalizedJob {
     title: item.title,
     company: item.company?.name ?? "",
     track: "B",
+    description: "",
+    location: item.remote === "fully" ? "remote Poland" : "Poland",
+    contractType: null,
     salaryMin: null,
     salaryMax: null,
     salaryCurrency: null,

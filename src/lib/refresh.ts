@@ -22,28 +22,11 @@ export type RefreshResult = {
 };
 
 function buildFilterInput(job: NormalizedJob): FilterInput {
-  let description = "";
-  let location = "";
-  let contractType: string | null = null;
-
-  try {
-    const parsed = JSON.parse(job.rawJson) as Record<string, unknown>;
-    description = String(parsed.description ?? "");
-    location = Array.isArray(parsed.locationRestrictions)
-      ? parsed.locationRestrictions.join(" ")
-      : String(parsed.workplaceType ?? "");
-    if (parsed.contractType != null) {
-      contractType = String(parsed.contractType);
-    }
-  } catch {
-    // best-effort parse
-  }
-
   return {
     title: job.title,
     company: job.company,
-    description,
-    location,
+    description: job.description,
+    location: job.location,
     tags: [
       ...job.hardRequired,
       ...job.hardNice,
@@ -51,7 +34,7 @@ function buildFilterInput(job: NormalizedJob): FilterInput {
       ...job.softNice,
     ],
     track: job.track,
-    contractType,
+    contractType: job.contractType,
     timezone: null,
   };
 }

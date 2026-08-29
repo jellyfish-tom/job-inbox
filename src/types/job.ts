@@ -19,6 +19,9 @@ export type NormalizedJob = {
   title: string;
   company: string;
   track: Track;
+  description: string;
+  location: string;
+  contractType: string | null;
   salaryMin: number | null;
   salaryMax: number | null;
   salaryCurrency: string | null;
