@@ -89,7 +89,7 @@ export async function refreshSourceWith(
         return finish("failed", errorMessage(err));
       }
 
-      const existing = await getJobBySourceExternalId(source, job.externalId);
+      const existing = await getJobBySourceExternalId(job.source, job.externalId);
 
       if (!existing) {
         const filterInput = buildFilterInput(job);

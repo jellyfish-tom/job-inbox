@@ -213,6 +213,15 @@ export async function upsertJob(
   job: NormalizedJob,
   existing: JobRow | null,
 ): Promise<{ id: string; outcome: "inserted" | "updated" | "deduped" }> {
+  if (
+    existing &&
+    (existing.source !== job.source || existing.externalId !== job.externalId)
+  ) {
+    throw new Error(
+      `upsertJob: existing row (${existing.source}/${existing.externalId}) does not match job (${job.source}/${job.externalId})`,
+    );
+  }
+
   const ts = now();
 
   if (existing) {
