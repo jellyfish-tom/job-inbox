@@ -76,6 +76,19 @@ test("upsert updates title but preserves applied status and notes", async () => 
   expect(row.rows[0].notes).toBe("hello");
 });
 
+test("upsertJob throws when existing row key does not match job", async () => {
+  await upsertJob(sampleJob(), null);
+  const existing = await getJobBySourceExternalId("remoteok", "job-1");
+  expect(existing).toBeTruthy();
+
+  await expect(
+    upsertJob(
+      sampleJob({ source: "himalayas", externalId: "job-2" }),
+      existing,
+    ),
+  ).rejects.toThrow(/upsertJob.*does not match/);
+});
+
 test("applyJob sets status applied, appliedAt, and applied event", async () => {
   const { id } = await upsertJob(sampleJob(), null);
   await applyJob(id);
