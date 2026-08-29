@@ -1,10 +1,13 @@
-export type SourceId =
-  | "jungle"
-  | "himalayas"
-  | "wwr"
-  | "justjoin"
-  | "nofluff"
-  | "remoteok";
+export const SOURCE_IDS = [
+  "himalayas",
+  "wwr",
+  "remoteok",
+  "jungle",
+  "justjoin",
+  "nofluff",
+] as const;
+
+export type SourceId = (typeof SOURCE_IDS)[number];
 
 export type Track = "A" | "B";
 export type JobStatus = "new" | "applied" | "rejected";

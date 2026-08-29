@@ -1,3 +1,4 @@
+import { SOURCE_IDS } from "@/types/job";
 import type { SourceId } from "@/types/job";
 
 export function authorizeRefresh(header: string | null, secret: string): boolean {
@@ -5,14 +6,8 @@ export function authorizeRefresh(header: string | null, secret: string): boolean
 }
 
 export function parseSourceParam(value: string | null): SourceId | null {
-  const allowed: SourceId[] = [
-    "jungle",
-    "himalayas",
-    "wwr",
-    "justjoin",
-    "nofluff",
-    "remoteok",
-  ];
-  if (value && (allowed as string[]).includes(value)) return value as SourceId;
+  if (value && (SOURCE_IDS as readonly string[]).includes(value)) {
+    return value as SourceId;
+  }
   return null;
 }

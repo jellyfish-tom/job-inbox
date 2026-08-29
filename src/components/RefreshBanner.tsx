@@ -2,16 +2,7 @@
 
 import { triggerRefresh } from "@/app/actions/refresh";
 import type { RefreshRunRow } from "@/lib/db/queries";
-import type { SourceId } from "@/types/job";
-
-const SOURCES: SourceId[] = [
-  "himalayas",
-  "wwr",
-  "remoteok",
-  "jungle",
-  "justjoin",
-  "nofluff",
-];
+import { SOURCE_IDS } from "@/types/job";
 
 export function RefreshBanner({ runs }: { runs: RefreshRunRow[] }) {
   const runBySource = new Map(runs.map((run) => [run.source, run]));
@@ -20,7 +11,7 @@ export function RefreshBanner({ runs }: { runs: RefreshRunRow[] }) {
     <section className="refresh-banner" aria-label="Refresh status">
       <h2>Sources</h2>
       <ul className="refresh-list">
-        {SOURCES.map((source) => {
+        {SOURCE_IDS.map((source) => {
           const run = runBySource.get(source);
           const time = run?.finishedAt ?? run?.startedAt;
 
