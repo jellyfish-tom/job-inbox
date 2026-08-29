@@ -1,0 +1,10 @@
+{
+  "id": "nf-1",
+  "title": "Senior Frontend Engineer",
+  "company": { "name": "PolishCo" },
+  "seniority": ["Senior"],
+  "remote": "fully",
+  "skills": { "must": ["TypeScript"], "nice": ["Playwright"] },
+  "posted": "2026-08-27T10:00:00.000Z",
+  "url": "https://nofluffjobs.com/job/nf-1"
+}

@@ -1,0 +1,10 @@
+{
+  "id": "jj-1",
+  "title": "Senior React Developer",
+  "companyName": "PolishCo",
+  "experienceLevel": "senior",
+  "workplaceType": "remote",
+  "employmentTypes": [{ "type": "b2b", "from": 20000, "to": 28000, "currency": "pln" }],
+  "requiredSkills": [{ "name": "React" }, { "name": "TypeScript" }],
+  "publishedAt": "2026-08-27T10:00:00.000Z"
+}

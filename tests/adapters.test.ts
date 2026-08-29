@@ -2,8 +2,12 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { expect, test } from "vitest";
 import { normalize as normalizeHimalayas } from "@/lib/sources/himalayas";
+import { normalize as normalizeJustjoin } from "@/lib/sources/justjoin";
+import { normalize as normalizeJungle } from "@/lib/sources/jungle";
+import { normalize as normalizeNofluff } from "@/lib/sources/nofluff";
 import { normalize as normalizeRemoteok } from "@/lib/sources/remoteok";
 import { normalize as normalizeWwr, parseRssItems } from "@/lib/sources/wwr";
+import { getAdapter } from "@/lib/sources/registry";
 
 const fx = (name: string) =>
   readFileSync(path.join(process.cwd(), "tests/fixtures", name), "utf8");
@@ -49,4 +53,35 @@ test("wwr splits Company: Role and parses RSS", () => {
   expect(job.title).toBe("Senior Frontend Engineer");
   expect(job.url).toContain("weworkremotely.com");
   expect(job.track).toBe("A");
+});
+
+test("justjoin track B salary and skills", () => {
+  const job = normalizeJustjoin(JSON.parse(fx("justjoin-one.json")));
+  expect(job.source).toBe("justjoin");
+  expect(job.track).toBe("B");
+  expect(job.url).toBe("https://justjoin.it/job-offer/jj-1");
+  expect(job.salaryMin).toBe(20000);
+  expect(job.hardRequired).toEqual(["React", "TypeScript"]);
+});
+
+test("nofluff splits must/nice", () => {
+  const job = normalizeNofluff(JSON.parse(fx("nofluff-one.json")));
+  expect(job.hardRequired).toEqual(["TypeScript"]);
+  expect(job.hardNice).toEqual(["Playwright"]);
+  expect(job.track).toBe("B");
+});
+
+test("jungle track A", () => {
+  const job = normalizeJungle(JSON.parse(fx("jungle-one.json")));
+  expect(job.source).toBe("jungle");
+  expect(job.externalId).toBe("wttj-1");
+  expect(job.url).toContain("welcometothejungle.com");
+  expect(job.track).toBe("A");
+});
+
+test("registry returns six adapters and rejects unknown", () => {
+  for (const s of ["jungle", "himalayas", "wwr", "justjoin", "nofluff", "remoteok"] as const) {
+    expect(getAdapter(s).source).toBe(s);
+  }
+  expect(() => getAdapter("linkedin" as never)).toThrow(/unknown source/);
 });

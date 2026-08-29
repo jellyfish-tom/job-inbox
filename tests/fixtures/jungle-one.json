@@ -1,0 +1,9 @@
+{
+  "id": "wttj-1",
+  "name": "Senior Frontend Engineer",
+  "company": { "name": "JungleCo" },
+  "urls": { "show": "https://www.welcometothejungle.com/en/companies/jungleco/jobs/senior-frontend-engineer_wttj-1" },
+  "published_at": "2026-08-27T10:00:00.000Z",
+  "skills": ["React", "TypeScript"],
+  "contract_type": "full_time"
+}
