@@ -8,7 +8,6 @@ export function AppliedRow({ job }: { job: JobRow }) {
   const [notes, setNotes] = useState(job.notes);
   const notesRef = useRef(job.notes);
   const dirtyRef = useRef(false);
-  const saveGenerationRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -18,21 +17,12 @@ export function AppliedRow({ job }: { job: JobRow }) {
     }
   }, [job.notes]);
 
-  async function flushNotes(gen: number) {
-    if (gen !== saveGenerationRef.current) return;
-    await saveNotesAction(job.id, notesRef.current);
-    if (gen !== saveGenerationRef.current) {
-      void flushNotes(saveGenerationRef.current);
-      return;
-    }
-    dirtyRef.current = false;
-  }
-
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       if (dirtyRef.current) {
-        void flushNotes(saveGenerationRef.current);
+        dirtyRef.current = false;
+        void saveNotesAction(job.id, notesRef.current);
       }
     };
   }, [job.id]);
@@ -41,10 +31,10 @@ export function AppliedRow({ job }: { job: JobRow }) {
     setNotes(value);
     notesRef.current = value;
     dirtyRef.current = true;
-    const gen = ++saveGenerationRef.current;
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
-      void flushNotes(gen);
+      dirtyRef.current = false;
+      void saveNotesAction(job.id, notesRef.current);
     }, 500);
   }
 
