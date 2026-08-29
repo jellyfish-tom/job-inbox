@@ -1,8 +1,8 @@
 import { isInstantReject, matchesCriteria } from "@/lib/filters";
 import {
   createRefreshRun,
-  findJobId,
   finishRefreshRun,
+  getJobBySourceExternalId,
   getWatermark,
   upsertJob,
 } from "@/lib/db/queries";
@@ -94,9 +94,9 @@ export async function refreshSourceWith(
         return fail(String(err));
       }
 
-      const existingId = await findJobId(source, job.externalId);
+      const existing = await getJobBySourceExternalId(source, job.externalId);
 
-      if (!existingId) {
+      if (!existing) {
         const filterInput = buildFilterInput(job);
         if (isInstantReject(filterInput) || !matchesCriteria(filterInput)) {
           rejected++;
@@ -109,7 +109,7 @@ export async function refreshSourceWith(
         }
       }
 
-      const { outcome } = await upsertJob(job);
+      const { outcome } = await upsertJob(job, existing);
       if (outcome === "inserted") {
         inserted++;
       } else {

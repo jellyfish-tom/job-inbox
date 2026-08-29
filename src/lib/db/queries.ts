@@ -187,24 +187,16 @@ export async function getWatermark(source: SourceId): Promise<string | null> {
   return value == null ? null : String(value);
 }
 
-export async function findJobId(
+export async function getJobBySourceExternalId(
   source: SourceId,
   externalId: string,
-): Promise<string | null> {
-  const existing = await findBySourceExternalId(source, externalId);
-  return existing?.id ?? null;
-}
-
-async function findBySourceExternalId(
-  source: SourceId,
-  externalId: string,
-): Promise<JobDbRow | null> {
+): Promise<JobRow | null> {
   const result = await getDb().execute({
     sql: "SELECT * FROM jobs WHERE source = ? AND external_id = ?",
     args: [source, externalId],
   });
   if (result.rows.length === 0) return null;
-  return result.rows[0] as unknown as JobDbRow;
+  return mapJobRow(result.rows[0] as unknown as JobDbRow);
 }
 
 async function findByNormalizedUrl(url: string): Promise<JobDbRow | null> {
@@ -219,8 +211,8 @@ async function findByNormalizedUrl(url: string): Promise<JobDbRow | null> {
 
 export async function upsertJob(
   job: NormalizedJob,
+  existing: JobRow | null,
 ): Promise<{ id: string; outcome: "inserted" | "updated" | "deduped" }> {
-  const existing = await findBySourceExternalId(job.source, job.externalId);
   const ts = now();
 
   if (existing) {

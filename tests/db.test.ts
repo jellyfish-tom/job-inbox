@@ -6,6 +6,7 @@ import {
   applyJob,
   createRefreshRun,
   finishRefreshRun,
+  getJobBySourceExternalId,
   getWatermark,
   updateNotes,
   upsertJob,
@@ -57,11 +58,14 @@ afterAll(() => {
 });
 
 test("upsert updates title but preserves applied status and notes", async () => {
-  const { id } = await upsertJob(sampleJob());
+  const { id } = await upsertJob(sampleJob(), null);
   await applyJob(id);
   await updateNotes(id, "hello");
 
-  await upsertJob(sampleJob({ title: "New Title" }));
+  await upsertJob(
+    sampleJob({ title: "New Title" }),
+    await getJobBySourceExternalId("remoteok", "job-1"),
+  );
 
   const row = await getDb().execute({
     sql: "SELECT title, status, notes FROM jobs WHERE id = ?",
@@ -73,7 +77,7 @@ test("upsert updates title but preserves applied status and notes", async () => 
 });
 
 test("applyJob sets status applied, appliedAt, and applied event", async () => {
-  const { id } = await upsertJob(sampleJob());
+  const { id } = await upsertJob(sampleJob(), null);
   await applyJob(id);
 
   const row = await getDb().execute({
@@ -98,6 +102,7 @@ test("second job with same normalized url is deduped", async () => {
       externalId: "job-a",
       url: "https://remoteok.com/remote-jobs/123",
     }),
+    null,
   );
 
   const second = await upsertJob(
@@ -105,6 +110,7 @@ test("second job with same normalized url is deduped", async () => {
       externalId: "job-b",
       url: "https://remoteok.com/remote-jobs/123/?utm_source=x",
     }),
+    null,
   );
 
   expect(second.outcome).toBe("deduped");
