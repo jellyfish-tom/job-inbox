@@ -13,7 +13,7 @@ export async function login(
   }
 
   const cookieStore = await cookies();
-  cookieStore.set(COOKIE, signSession(), {
+  cookieStore.set(COOKIE, await signSession(), {
     httpOnly: true,
     secure: true,
     sameSite: "lax",
