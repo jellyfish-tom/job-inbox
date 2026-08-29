@@ -1,4 +1,5 @@
 import type { NormalizedJob } from "@/types/job";
+import { pickArray } from "./parse";
 import type { SourceAdapter } from "./types";
 
 type JustjoinRaw = {
@@ -17,21 +18,6 @@ type JustjoinRaw = {
 
 const PRIMARY_URL = "https://justjoin.it/api/offers";
 const FALLBACK_URL = "https://api.justjoin.it/v2/user-panel/offers";
-
-function extractOffers(data: unknown): unknown[] {
-  if (Array.isArray(data)) {
-    return data;
-  }
-  if (data && typeof data === "object") {
-    const record = data as Record<string, unknown>;
-    for (const key of ["data", "offers", "items"]) {
-      if (Array.isArray(record[key])) {
-        return record[key] as unknown[];
-      }
-    }
-  }
-  return [];
-}
 
 export function normalize(raw: unknown): NormalizedJob {
   const item = raw as JustjoinRaw;
@@ -77,7 +63,7 @@ export const justjoin: SourceAdapter = {
     if (!res.ok) {
       throw new Error(`justjoin fetch failed: ${res.status}`);
     }
-    return extractOffers(await res.json());
+    return pickArray(await res.json(), ["data", "offers", "items"]);
   },
   normalize,
 };

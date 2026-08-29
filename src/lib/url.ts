@@ -3,7 +3,6 @@ export function normalizeUrl(url: string): string {
   u.hash = "";
   u.search = "";
   u.hostname = u.hostname.toLowerCase();
-  let path = u.pathname.replace(/\/+$/, "");
-  if (path === "") path = "";
+  const path = u.pathname.replace(/\/+$/, "");
   return `${u.protocol}//${u.host}${path}`;
 }

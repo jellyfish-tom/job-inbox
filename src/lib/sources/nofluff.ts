@@ -1,4 +1,5 @@
 import type { NormalizedJob } from "@/types/job";
+import { pickArray } from "./parse";
 import type { SourceAdapter } from "./types";
 
 type NofluffRaw = {
@@ -11,21 +12,6 @@ type NofluffRaw = {
 };
 
 const LISTINGS_URL = "https://nofluffjobs.com/api/search/posting";
-
-function extractPostings(data: unknown): unknown[] {
-  if (Array.isArray(data)) {
-    return data;
-  }
-  if (data && typeof data === "object") {
-    const record = data as Record<string, unknown>;
-    for (const key of ["postings", "data", "items"]) {
-      if (Array.isArray(record[key])) {
-        return record[key] as unknown[];
-      }
-    }
-  }
-  return [];
-}
 
 export function normalize(raw: unknown): NormalizedJob {
   const item = raw as NofluffRaw;
@@ -71,7 +57,7 @@ export const nofluff: SourceAdapter = {
     if (!res.ok) {
       throw new Error(`nofluff fetch failed: ${res.status}`);
     }
-    return extractPostings(await res.json());
+    return pickArray(await res.json(), ["postings", "data", "items"]);
   },
   normalize,
 };

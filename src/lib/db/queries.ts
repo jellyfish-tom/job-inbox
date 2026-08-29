@@ -115,16 +115,27 @@ function mapRefreshRunRow(row: RefreshRunDbRow): RefreshRunRow {
   };
 }
 
-async function insertEvent(
-  jobId: string,
-  type: string,
-  actor: string,
-): Promise<void> {
-  await getDb().execute({
+type EventType =
+  | "fetched"
+  | "applied"
+  | "rejected"
+  | "notes_updated"
+  | "deduped";
+
+function eventStatement(jobId: string, type: EventType, actor: string) {
+  return {
     sql: `INSERT INTO job_events (id, job_id, type, at, actor, payload)
           VALUES (?, ?, ?, ?, ?, '{}')`,
     args: [crypto.randomUUID(), jobId, type, now(), actor],
-  });
+  };
+}
+
+async function insertEvent(
+  jobId: string,
+  type: EventType,
+  actor: string,
+): Promise<void> {
+  await getDb().execute(eventStatement(jobId, type, actor));
 }
 
 export async function createRefreshRun(
@@ -287,41 +298,27 @@ export async function applyJob(id: string): Promise<void> {
             WHERE id = ?`,
       args: [ts, id],
     },
-    {
-      sql: `INSERT INTO job_events (id, job_id, type, at, actor, payload)
-            VALUES (?, ?, 'applied', ?, 'user', '{}')`,
-      args: [crypto.randomUUID(), id, ts],
-    },
+    eventStatement(id, "applied", "user"),
   ]);
 }
 
 export async function rejectJob(id: string): Promise<void> {
-  const ts = now();
   await getDb().batch([
     {
       sql: "UPDATE jobs SET status = 'rejected' WHERE id = ?",
       args: [id],
     },
-    {
-      sql: `INSERT INTO job_events (id, job_id, type, at, actor, payload)
-            VALUES (?, ?, 'rejected', ?, 'user', '{}')`,
-      args: [crypto.randomUUID(), id, ts],
-    },
+    eventStatement(id, "rejected", "user"),
   ]);
 }
 
 export async function updateNotes(id: string, notes: string): Promise<void> {
-  const ts = now();
   await getDb().batch([
     {
       sql: "UPDATE jobs SET notes = ? WHERE id = ?",
       args: [notes, id],
     },
-    {
-      sql: `INSERT INTO job_events (id, job_id, type, at, actor, payload)
-            VALUES (?, ?, 'notes_updated', ?, 'user', '{}')`,
-      args: [crypto.randomUUID(), id, ts],
-    },
+    eventStatement(id, "notes_updated", "user"),
   ]);
 }
 
