@@ -1,16 +1,16 @@
 import { errorMessage } from "@/lib/errors";
-import { DEFAULT_FILTERS } from "@/lib/filter-defaults";
 import { isInstantReject, matchesCriteria } from "@/lib/filters";
 import {
   createRefreshRun,
   finishRefreshRun,
+  getAllFilterConfigs,
   getJobBySourceExternalId,
   getWatermark,
   upsertJob,
 } from "@/lib/db/queries";
 import { getAdapter } from "@/lib/sources/registry";
 import type { SourceAdapter } from "@/lib/sources/types";
-import type { FilterInput, NormalizedJob, SourceId } from "@/types/job";
+import type { FilterInput, NormalizedJob, SourceId, Track, TrackFilter } from "@/types/job";
 
 export type RefreshResult = {
   source: SourceId;
@@ -52,6 +52,7 @@ function isOlderThanWatermark(
 export async function refreshSourceWith(
   adapter: SourceAdapter,
   source: SourceId,
+  filters: Record<Track, TrackFilter>,
 ): Promise<RefreshResult> {
   const watermark = await getWatermark(source);
   const runId = await createRefreshRun(source, watermark);
@@ -94,7 +95,7 @@ export async function refreshSourceWith(
 
       if (!existing) {
         const filterInput = buildFilterInput(job);
-        const filter = DEFAULT_FILTERS[job.track];
+        const filter = filters[job.track];
         if (
           isInstantReject(filterInput, filter) ||
           !matchesCriteria(filterInput, filter)
@@ -124,5 +125,6 @@ export async function refreshSourceWith(
 }
 
 export async function refreshSource(source: SourceId): Promise<RefreshResult> {
-  return refreshSourceWith(getAdapter(source), source);
+  const filters = await getAllFilterConfigs();
+  return refreshSourceWith(getAdapter(source), source, filters);
 }

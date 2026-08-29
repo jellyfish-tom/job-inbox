@@ -8,6 +8,7 @@ import {
   listInbox,
   updateNotes,
 } from "@/lib/db/queries";
+import { DEFAULT_FILTERS } from "@/lib/filter-defaults";
 import { refreshSourceWith } from "@/lib/refresh";
 import type { NormalizedJob } from "@/types/job";
 
@@ -76,7 +77,7 @@ test("inserts matching job and counts rejected", async () => {
       return hybridJob();
     },
   };
-  const result = await refreshSourceWith(adapter, "remoteok");
+  const result = await refreshSourceWith(adapter, "remoteok", DEFAULT_FILTERS);
   expect(result.status).toBe("ok");
   expect(result.inserted).toBe(1);
   expect(result.rejected).toBe(1);
@@ -114,7 +115,7 @@ test("second fetch does not clobber applied notes", async () => {
     normalize: () => makeJob("Senior Frontend Engineer"),
   };
 
-  await refreshSourceWith(adapter, "remoteok");
+  await refreshSourceWith(adapter, "remoteok", DEFAULT_FILTERS);
 
   const inbox1 = await listInbox();
   expect(inbox1).toHaveLength(1);
@@ -126,7 +127,7 @@ test("second fetch does not clobber applied notes", async () => {
     fetchListings: async () => [raw],
     normalize: () => makeJob("New Title"),
   };
-  await refreshSourceWith(adapter2, "remoteok");
+  await refreshSourceWith(adapter2, "remoteok", DEFAULT_FILTERS);
 
   const inbox = await listInbox();
   expect(inbox).toHaveLength(0);
@@ -143,7 +144,23 @@ test("unparseable listing fails the run", async () => {
       throw new Error("unparseable listing");
     },
   };
-  const result = await refreshSourceWith(adapter, "remoteok");
+  const result = await refreshSourceWith(adapter, "remoteok", DEFAULT_FILTERS);
   expect(result.status).toBe("failed");
   expect(result.error).toBe("unparseable listing");
+});
+
+test("custom accept-all filter keeps a job the default would reject", async () => {
+  const acceptAll = {
+    A: { requiredGroups: [], exclude: [] },
+    B: { requiredGroups: [], exclude: [] },
+  };
+  const adapter = {
+    source: "remoteok" as const,
+    fetchListings: async () => [hybridRaw],
+    normalize: () => hybridJob(),
+  };
+  const result = await refreshSourceWith(adapter, "remoteok", acceptAll);
+  expect(result.status).toBe("ok");
+  expect(result.inserted).toBe(1);
+  expect(result.rejected).toBe(0);
 });
