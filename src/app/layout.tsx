@@ -1,3 +1,7 @@
+import Link from "next/link";
+import { logout } from "@/app/actions/logout";
+import "./globals.css";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -5,7 +9,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <nav className="site-nav">
+          <Link href="/">Inbox</Link>
+          <Link href="/applied">Applied</Link>
+          <form action={logout}>
+            <button type="submit">Logout</button>
+          </form>
+        </nav>
+        {children}
+      </body>
     </html>
   );
 }
