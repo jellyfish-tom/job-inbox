@@ -1,3 +1,4 @@
+import { errorMessage } from "@/lib/errors";
 import { isInstantReject, matchesCriteria } from "@/lib/filters";
 import {
   createRefreshRun,
@@ -59,26 +60,20 @@ export async function refreshSourceWith(
   let skipped = 0;
   let rejected = 0;
 
-  const fail = async (error: string): Promise<RefreshResult> => {
+  const finish = async (
+    status: "ok" | "failed",
+    error: string,
+  ): Promise<RefreshResult> => {
     await finishRefreshRun(runId, {
       finishedAt: new Date().toISOString(),
-      status: "failed",
+      status,
       fetched,
       inserted,
       skipped,
       rejected,
       error,
     });
-    return {
-      source,
-      runId,
-      status: "failed",
-      fetched,
-      inserted,
-      skipped,
-      rejected,
-      error,
-    };
+    return { source, runId, status, fetched, inserted, skipped, rejected, error };
   };
 
   try {
@@ -91,7 +86,7 @@ export async function refreshSourceWith(
       try {
         job = adapter.normalize(raw);
       } catch (err) {
-        return fail(String(err));
+        return finish("failed", errorMessage(err));
       }
 
       const existing = await getJobBySourceExternalId(source, job.externalId);
@@ -117,28 +112,9 @@ export async function refreshSourceWith(
       }
     }
 
-    await finishRefreshRun(runId, {
-      finishedAt: new Date().toISOString(),
-      status: "ok",
-      fetched,
-      inserted,
-      skipped,
-      rejected,
-      error: "",
-    });
-
-    return {
-      source,
-      runId,
-      status: "ok",
-      fetched,
-      inserted,
-      skipped,
-      rejected,
-      error: "",
-    };
+    return finish("ok", "");
   } catch (err) {
-    return fail(String(err));
+    return finish("failed", errorMessage(err));
   }
 }
 

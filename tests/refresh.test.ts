@@ -145,5 +145,5 @@ test("unparseable listing fails the run", async () => {
   };
   const result = await refreshSourceWith(adapter, "remoteok");
   expect(result.status).toBe("failed");
-  expect(result.error).toMatch(/unparseable listing/);
+  expect(result.error).toBe("unparseable listing");
 });
