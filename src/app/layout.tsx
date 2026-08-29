@@ -13,6 +13,7 @@ export default function RootLayout({
         <nav className="site-nav">
           <Link href="/">Inbox</Link>
           <Link href="/applied">Applied</Link>
+          <Link href="/filters">Filters</Link>
           <form action={logout}>
             <button type="submit">Logout</button>
           </form>
