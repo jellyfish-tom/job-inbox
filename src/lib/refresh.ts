@@ -1,4 +1,5 @@
 import { errorMessage } from "@/lib/errors";
+import { DEFAULT_FILTERS } from "@/lib/filter-defaults";
 import { isInstantReject, matchesCriteria } from "@/lib/filters";
 import {
   createRefreshRun,
@@ -93,7 +94,11 @@ export async function refreshSourceWith(
 
       if (!existing) {
         const filterInput = buildFilterInput(job);
-        if (isInstantReject(filterInput) || !matchesCriteria(filterInput)) {
+        const filter = DEFAULT_FILTERS[job.track];
+        if (
+          isInstantReject(filterInput, filter) ||
+          !matchesCriteria(filterInput, filter)
+        ) {
           rejected++;
           continue;
         }

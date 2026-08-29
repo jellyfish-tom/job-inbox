@@ -44,3 +44,13 @@ export type FilterInput = {
   contractType: string | null;
   timezone: string | null;
 };
+
+export type KeywordGroup = {
+  label: string;
+  keywords: string[];
+};
+
+export type TrackFilter = {
+  requiredGroups: KeywordGroup[];
+  exclude: string[];
+};
