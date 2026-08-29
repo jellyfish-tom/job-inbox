@@ -3,7 +3,8 @@ import { pickArray } from "./parse";
 import type { SourceAdapter } from "./types";
 
 type JustjoinRaw = {
-  id?: string;
+  guid?: string;
+  slug?: string;
   title?: string;
   companyName?: string;
   requiredSkills?: { name?: string }[];
@@ -17,12 +18,11 @@ type JustjoinRaw = {
   workplaceType?: string;
 };
 
-const PRIMARY_URL = "https://justjoin.it/api/offers";
-const FALLBACK_URL = "https://api.justjoin.it/v2/user-panel/offers";
+const LISTINGS_URL = "https://justjoin.it/api/candidate-api/offers";
 
 export function normalize(raw: unknown): NormalizedJob {
   const item = raw as JustjoinRaw;
-  if (!item.id || !item.title) {
+  if (!item.guid || !item.slug || !item.title) {
     throw new Error("unparseable listing");
   }
 
@@ -30,8 +30,8 @@ export function normalize(raw: unknown): NormalizedJob {
 
   return {
     source: "justjoin",
-    externalId: item.id,
-    url: `https://justjoin.it/job-offer/${item.id}`,
+    externalId: item.guid,
+    url: `https://justjoin.it/job-offer/${item.slug}`,
     title: item.title,
     company: item.companyName ?? "",
     track: "B",
@@ -56,14 +56,9 @@ export function normalize(raw: unknown): NormalizedJob {
 export const justjoin: SourceAdapter = {
   source: "justjoin",
   async fetchListings() {
-    let res = await fetch(PRIMARY_URL, {
+    const res = await fetch(LISTINGS_URL, {
       headers: { "User-Agent": "job-inbox/0.1" },
     });
-    if (res.status === 404) {
-      res = await fetch(FALLBACK_URL, {
-        headers: { "User-Agent": "job-inbox/0.1" },
-      });
-    }
     if (!res.ok) {
       throw new Error(`justjoin fetch failed: ${res.status}`);
     }

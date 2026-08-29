@@ -65,7 +65,9 @@ test("justjoin track B salary and skills", () => {
   const job = normalizeJustjoin(JSON.parse(fx("justjoin-one.json")));
   expect(job.source).toBe("justjoin");
   expect(job.track).toBe("B");
-  expect(job.url).toBe("https://justjoin.it/job-offer/jj-1");
+  expect(job.url).toBe(
+    "https://justjoin.it/job-offer/polishco-senior-react-developer",
+  );
   expect(job.salaryMin).toBe(20000);
   expect(job.hardRequired).toEqual(["React", "TypeScript"]);
 });

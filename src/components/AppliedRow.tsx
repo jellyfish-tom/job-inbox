@@ -48,7 +48,7 @@ export function AppliedRow({ job }: { job: JobRow }) {
           {job.company} · {job.source} · Track {job.track}
         </span>
         {job.appliedAt ? (
-          <time dateTime={job.appliedAt}>
+          <time dateTime={job.appliedAt} suppressHydrationWarning>
             Applied {new Date(job.appliedAt).toLocaleString()}
           </time>
         ) : null}

@@ -24,7 +24,7 @@ export function RefreshBanner({ runs }: { runs: RefreshRunRow[] }) {
                     {run.status}
                   </span>
                   {time ? (
-                    <time dateTime={time}>
+                    <time dateTime={time} suppressHydrationWarning>
                       {new Date(time).toLocaleString()}
                     </time>
                   ) : null}
