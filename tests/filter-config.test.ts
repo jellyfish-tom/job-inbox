@@ -58,3 +58,11 @@ test("malformed row falls back to defaults", async () => {
   });
   expect(await getFilterConfig("B")).toEqual(DEFAULT_FILTERS.B);
 });
+
+test("valid JSON but wrong shape falls back to defaults", async () => {
+  await getDb().execute({
+    sql: `INSERT INTO filter_config (track, config, updated_at) VALUES (?, ?, ?)`,
+    args: ["A", JSON.stringify({ requiredGroups: "not-array", exclude: [] }), new Date().toISOString()],
+  });
+  expect(await getFilterConfig("A")).toEqual(DEFAULT_FILTERS.A);
+});
