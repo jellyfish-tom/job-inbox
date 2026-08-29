@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db/client";
 import { normalizeUrl } from "@/lib/url";
-import type { JobStatus, NormalizedJob, SourceId } from "@/types/job";
+import { DEFAULT_FILTERS } from "@/lib/filter-defaults";
+import type { JobStatus, NormalizedJob, SourceId, Track, TrackFilter } from "@/types/job";
 
 export type JobRow = Omit<
   NormalizedJob,
@@ -354,4 +355,65 @@ export async function listLatestRuns(): Promise<RefreshRunRow[]> {
   return result.rows.map((row) =>
     mapRefreshRunRow(row as unknown as RefreshRunDbRow),
   );
+}
+
+function isTrackFilter(value: unknown): value is TrackFilter {
+  if (typeof value !== "object" || value === null) return false;
+  const obj = value as Record<string, unknown>;
+  if (!Array.isArray(obj.requiredGroups) || !Array.isArray(obj.exclude)) {
+    return false;
+  }
+  if (!obj.exclude.every((e) => typeof e === "string")) return false;
+  return obj.requiredGroups.every((group) => {
+    if (typeof group !== "object" || group === null) return false;
+    const g = group as Record<string, unknown>;
+    return (
+      typeof g.label === "string" &&
+      Array.isArray(g.keywords) &&
+      g.keywords.every((k) => typeof k === "string")
+    );
+  });
+}
+
+export async function getFilterConfig(track: Track): Promise<TrackFilter> {
+  const result = await getDb().execute({
+    sql: "SELECT config FROM filter_config WHERE track = ?",
+    args: [track],
+  });
+  const raw = result.rows[0]?.config;
+  if (raw == null) return DEFAULT_FILTERS[track];
+  try {
+    const parsed: unknown = JSON.parse(String(raw));
+    return isTrackFilter(parsed) ? parsed : DEFAULT_FILTERS[track];
+  } catch {
+    return DEFAULT_FILTERS[track];
+  }
+}
+
+export async function getAllFilterConfigs(): Promise<Record<Track, TrackFilter>> {
+  const [a, b] = await Promise.all([
+    getFilterConfig("A"),
+    getFilterConfig("B"),
+  ]);
+  return { A: a, B: b };
+}
+
+export async function saveFilterConfig(
+  track: Track,
+  config: TrackFilter,
+): Promise<void> {
+  await getDb().execute({
+    sql: `INSERT INTO filter_config (track, config, updated_at)
+          VALUES (?, ?, ?)
+          ON CONFLICT(track) DO UPDATE
+            SET config = excluded.config, updated_at = excluded.updated_at`,
+    args: [track, JSON.stringify(config), now()],
+  });
+}
+
+export async function resetFilterConfig(track: Track): Promise<void> {
+  await getDb().execute({
+    sql: "DELETE FROM filter_config WHERE track = ?",
+    args: [track],
+  });
 }

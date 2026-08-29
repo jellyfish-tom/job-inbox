@@ -1,4 +1,4 @@
-CREATE TABLE jobs (
+CREATE TABLE IF NOT EXISTS jobs (
   id TEXT PRIMARY KEY,
   source TEXT NOT NULL,
   external_id TEXT NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE jobs (
   UNIQUE (source, external_id)
 );
 
-CREATE TABLE job_events (
+CREATE TABLE IF NOT EXISTS job_events (
   id TEXT PRIMARY KEY,
   job_id TEXT NOT NULL,
   type TEXT NOT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE job_events (
   FOREIGN KEY (job_id) REFERENCES jobs(id)
 );
 
-CREATE TABLE refresh_runs (
+CREATE TABLE IF NOT EXISTS refresh_runs (
   id TEXT PRIMARY KEY,
   source TEXT NOT NULL,
   started_at TEXT NOT NULL,
