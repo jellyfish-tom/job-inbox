@@ -1,4 +1,5 @@
 import type { NormalizedJob } from "@/types/job";
+import { requireUrl } from "@/lib/url";
 import type { SourceAdapter } from "./types";
 
 export type RssItem = {
@@ -52,10 +53,12 @@ export function normalize(raw: unknown): NormalizedJob {
     }
   }
 
+  const validUrl = requireUrl(url);
+
   return {
     source: "wwr",
-    externalId: new URL(url).pathname,
-    url,
+    externalId: new URL(validUrl).pathname,
+    url: validUrl,
     title,
     company,
     track: "A",

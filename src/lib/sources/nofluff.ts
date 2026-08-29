@@ -1,4 +1,5 @@
 import type { NormalizedJob } from "@/types/job";
+import { requireUrl } from "@/lib/url";
 import { pickArray } from "./parse";
 import type { SourceAdapter } from "./types";
 
@@ -23,7 +24,7 @@ export function normalize(raw: unknown): NormalizedJob {
   return {
     source: "nofluff",
     externalId: item.id,
-    url: item.url,
+    url: requireUrl(item.url),
     title: item.title,
     company: item.company?.name ?? "",
     track: "B",

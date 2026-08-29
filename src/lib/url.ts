@@ -6,3 +6,10 @@ export function normalizeUrl(url: string): string {
   const path = u.pathname.replace(/\/+$/, "");
   return `${u.protocol}//${u.host}${path}`;
 }
+
+export function requireUrl(value: string | null | undefined): string {
+  if (!value || !URL.canParse(value)) {
+    throw new Error("unparseable listing");
+  }
+  return value;
+}

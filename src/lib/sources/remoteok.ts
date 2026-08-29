@@ -1,4 +1,5 @@
 import type { NormalizedJob } from "@/types/job";
+import { requireUrl } from "@/lib/url";
 import type { SourceAdapter } from "./types";
 
 type RemoteokRaw = {
@@ -33,7 +34,7 @@ export function normalize(raw: unknown): NormalizedJob {
   return {
     source: "remoteok",
     externalId: String(item.id),
-    url,
+    url: requireUrl(url),
     title: item.position,
     company: item.company ?? "",
     track: "A",

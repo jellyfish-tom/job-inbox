@@ -12,6 +12,12 @@ import { getAdapter } from "@/lib/sources/registry";
 const fx = (name: string) =>
   readFileSync(path.join(process.cwd(), "tests/fixtures", name), "utf8");
 
+test("himalayas rejects non-url guid used as url", () => {
+  expect(() =>
+    normalizeHimalayas({ title: "x", guid: "not a url" }),
+  ).toThrow(/unparseable listing/);
+});
+
 test("himalayas maps salary, url, track A, skills from categories", () => {
   const raw = JSON.parse(fx("himalayas-one.json"));
   const job = normalizeHimalayas(raw);
