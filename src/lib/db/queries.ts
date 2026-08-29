@@ -173,6 +173,14 @@ export async function getWatermark(source: SourceId): Promise<string | null> {
   return value == null ? null : String(value);
 }
 
+export async function findJobId(
+  source: SourceId,
+  externalId: string,
+): Promise<string | null> {
+  const existing = await findBySourceExternalId(source, externalId);
+  return existing?.id ?? null;
+}
+
 async function findBySourceExternalId(
   source: SourceId,
   externalId: string,
