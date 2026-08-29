@@ -1,4 +1,4 @@
-import { InboxRow } from "@/components/InboxRow";
+import { InboxFilter } from "@/components/InboxFilter";
 import { RefreshBanner } from "@/components/RefreshBanner";
 import { pinnedSearches } from "@/config/pinned-searches";
 import { listInbox, listLatestRuns } from "@/lib/db/queries";
@@ -35,13 +35,7 @@ export default async function Home() {
       {jobs.length === 0 ? (
         <p className="empty-state">No jobs in inbox.</p>
       ) : (
-        <ul className="job-list">
-          {jobs.map((job) => (
-            <li key={job.id}>
-              <InboxRow job={job} />
-            </li>
-          ))}
-        </ul>
+        <InboxFilter jobs={jobs} />
       )}
     </main>
   );
