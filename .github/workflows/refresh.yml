@@ -1,0 +1,21 @@
+name: refresh
+on:
+  schedule:
+    - cron: "0 */2 * * *"
+  workflow_dispatch:
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        source: [himalayas, wwr, remoteok, jungle, justjoin, nofluff]
+    steps:
+      - name: Refresh source
+        env:
+          REFRESH_SECRET: ${{ secrets.REFRESH_SECRET }}
+          VERCEL_REFRESH_URL: ${{ secrets.VERCEL_REFRESH_URL }}
+        run: |
+          curl -sS -f -X POST \
+            -H "Authorization: Bearer ${REFRESH_SECRET}" \
+            "${VERCEL_REFRESH_URL}?source=${{ matrix.source }}"
