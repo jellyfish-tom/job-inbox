@@ -15,11 +15,16 @@ export default function LoginPage() {
   }
 
   return (
-    <main>
-      <h1>Login</h1>
+    <main className="login-page">
       <form className="login-form" action={handleSubmit}>
-        <label htmlFor="password">Password</label>
-        <TextInput id="password" name="password" type="password" required />
+        <TextInput
+          id="password"
+          name="password"
+          type="password"
+          required
+          aria-label="Password"
+          placeholder="Enter your password"
+        />
         <Button type="submit" intent="primary">
           Log in
         </Button>
