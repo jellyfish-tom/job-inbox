@@ -1,3 +1,4 @@
+import { Button, Card } from "@proteus-ui/core";
 import { rejectJobAction } from "@/app/actions/jobs";
 import { ApplyButton } from "@/components/ApplyButton";
 import type { JobRow } from "@/lib/db/queries";
@@ -43,16 +44,28 @@ export function InboxRow({ job }: { job: JobRow }) {
     job.softNice.length > 0;
 
   return (
-    <article className="job-row">
-      <header className="job-row-header">
-        <a href={job.url} target="_blank" rel="noreferrer">
-          {job.title}
-        </a>
-        <span className="job-meta">
-          {job.company} · {job.source} · Track {job.track}
-        </span>
-      </header>
-
+    <Card
+      title={
+        <>
+          <a href={job.url} target="_blank" rel="noreferrer">
+            {job.title}
+          </a>
+          <span className="job-meta">
+            {job.company} · {job.source} · Track {job.track}
+          </span>
+        </>
+      }
+      footer={
+        <div className="job-actions">
+          <ApplyButton id={job.id} url={job.url} />
+          <form action={rejectJobAction.bind(null, job.id)}>
+            <Button type="submit" intent="danger">
+              Reject
+            </Button>
+          </form>
+        </div>
+      }
+    >
       {hasDetails ? (
         <div className="job-details">
           {salary ? (
@@ -67,13 +80,6 @@ export function InboxRow({ job }: { job: JobRow }) {
           <SkillDetails label="Soft nice" skills={job.softNice} />
         </div>
       ) : null}
-
-      <div className="job-actions">
-        <ApplyButton id={job.id} url={job.url} />
-        <form action={rejectJobAction.bind(null, job.id)}>
-          <button type="submit">Reject</button>
-        </form>
-      </div>
-    </article>
+    </Card>
   );
 }

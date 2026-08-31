@@ -1,0 +1,3 @@
+[submodule "vendor/proteus"]
+	path = vendor/proteus
+	url = https://github.com/proteus-ui/proteus.git

@@ -1,28 +1,44 @@
 "use client";
 
+import { Badge, Button, Section, Spinner, type BadgeIntent } from "@proteus-ui/core";
+import { useState } from "react";
 import { triggerRefresh } from "@/app/actions/refresh";
 import type { RefreshRunRow } from "@/lib/db/queries";
-import { SOURCE_IDS } from "@/types/job";
+import { SOURCE_IDS, type SourceId } from "@/types/job";
+
+function statusIntent(status: RefreshRunRow["status"]): BadgeIntent {
+  switch (status) {
+    case "ok":
+      return "primary";
+    case "running":
+      return "primary";
+    case "failed":
+      return "danger";
+    default: {
+      const _exhaustive: never = status;
+      return _exhaustive;
+    }
+  }
+}
 
 export function RefreshBanner({ runs }: { runs: RefreshRunRow[] }) {
   const runBySource = new Map(runs.map((run) => [run.source, run]));
+  const [busy, setBusy] = useState<ReadonlySet<SourceId>>(() => new Set());
 
   return (
-    <section className="refresh-banner" aria-label="Refresh status">
-      <h2>Sources</h2>
+    <Section className="refresh-banner" title="Sources" aria-label="Refresh status">
       <ul className="refresh-list">
         {SOURCE_IDS.map((source) => {
           const run = runBySource.get(source);
           const time = run?.finishedAt ?? run?.startedAt;
+          const refreshing = busy.has(source);
 
           return (
             <li key={source} className="refresh-row">
               <span className="refresh-source">{source}</span>
               {run ? (
                 <>
-                  <span className={`refresh-status refresh-status-${run.status}`}>
-                    {run.status}
-                  </span>
+                  <Badge intent={statusIntent(run.status)}>{run.status}</Badge>
                   {time ? (
                     <time dateTime={time} suppressHydrationWarning>
                       {new Date(time).toLocaleString()}
@@ -35,20 +51,32 @@ export function RefreshBanner({ runs }: { runs: RefreshRunRow[] }) {
                   ) : null}
                 </>
               ) : (
-                <span className="refresh-status">never</span>
+                <Badge>never</Badge>
               )}
-              <button
+              <Button
                 type="button"
+                size="sm"
+                disabled={refreshing}
                 onClick={async () => {
-                  await triggerRefresh(source);
+                  setBusy((s) => new Set(s).add(source));
+                  try {
+                    await triggerRefresh(source);
+                  } finally {
+                    setBusy((s) => {
+                      const next = new Set(s);
+                      next.delete(source);
+                      return next;
+                    });
+                  }
                 }}
               >
                 Refresh
-              </button>
+              </Button>
+              {refreshing ? <Spinner size="sm" label="Refreshing" /> : null}
             </li>
           );
         })}
       </ul>
-    </section>
+    </Section>
   );
 }

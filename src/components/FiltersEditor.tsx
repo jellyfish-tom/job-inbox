@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge, Button, Section, Spinner, Textarea, TextInput } from "@proteus-ui/core";
 import { useState, useTransition } from "react";
 import { resetFiltersAction, saveFiltersAction } from "@/app/actions/filters";
 import { DEFAULT_FILTERS } from "@/lib/filter-defaults";
@@ -62,9 +63,7 @@ export function FiltersEditor({
   }
 
   return (
-    <section className="filters-track">
-      <h2>Track {track}</h2>
-
+    <Section className="filters-track" title={`Track ${track}`}>
       <p className="filters-hint">
         A job is kept when it matches at least one keyword in every group and no
         exclude keyword. Keywords are comma- or newline-separated, case-insensitive.
@@ -72,38 +71,44 @@ export function FiltersEditor({
 
       {groups.map((group, index) => (
         <div key={group.id} className="filters-group">
-          <input
+          <TextInput
             aria-label={`Track ${track} group ${index + 1} label`}
             value={group.label}
-            onChange={(e) => updateGroupLabel(group.id, e.target.value)}
+            onValueChange={(label) => updateGroupLabel(group.id, label)}
           />
-          <textarea
+          <Textarea
             aria-label={`Track ${track} group ${index + 1} keywords`}
             value={group.keywords.join(", ")}
-            onChange={(e) => updateGroupKeywords(group.id, e.target.value)}
+            onValueChange={(text) => updateGroupKeywords(group.id, text)}
           />
-          <button type="button" onClick={() => removeGroup(group.id)}>
+          <Button
+            type="button"
+            intent="danger"
+            size="sm"
+            onClick={() => removeGroup(group.id)}
+          >
             Remove group
-          </button>
+          </Button>
         </div>
       ))}
 
-      <button type="button" onClick={addGroup}>
+      <Button type="button" onClick={addGroup}>
         Add group
-      </button>
+      </Button>
 
       <label className="filters-exclude">
         Exclude
-        <textarea
+        <Textarea
           aria-label={`Track ${track} exclude`}
           value={exclude.join(", ")}
-          onChange={(e) => updateExclude(e.target.value)}
+          onValueChange={updateExclude}
         />
       </label>
 
       <div className="filters-actions">
-        <button
+        <Button
           type="button"
+          intent="primary"
           disabled={pending}
           onClick={() =>
             startTransition(() => {
@@ -114,8 +119,8 @@ export function FiltersEditor({
           }
         >
           Save
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           disabled={pending}
           onClick={() => {
@@ -130,10 +135,19 @@ export function FiltersEditor({
           }}
         >
           Reset to defaults
-        </button>
-        {status === "saved" && <p role="status">Saved.</p>}
-        {status === "error" && <p role="status">Save failed — try again.</p>}
+        </Button>
+        {pending ? <Spinner size="sm" label="Saving" /> : null}
+        {status === "saved" && (
+          <Badge intent="primary" role="status">
+            Saved.
+          </Badge>
+        )}
+        {status === "error" && (
+          <Badge intent="danger" role="status">
+            Save failed — try again.
+          </Badge>
+        )}
       </div>
-    </section>
+    </Section>
   );
 }

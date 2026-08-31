@@ -1,5 +1,6 @@
 "use client";
 
+import { Checkbox, SearchBar } from "@proteus-ui/core";
 import { useMemo, useState } from "react";
 import { InboxRow } from "@/components/InboxRow";
 import type { JobRow } from "@/lib/db/queries";
@@ -27,35 +28,30 @@ export function InboxFilter({ jobs }: { jobs: JobRow[] }) {
   return (
     <>
       <div className="inbox-filter">
-        <input
-          type="search"
+        <SearchBar
           placeholder="Search title, company, skills"
           aria-label="Search inbox"
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onValueChange={setText}
         />
         <div className="inbox-filter-toggles" aria-label="Source filters">
           {SOURCE_IDS.map((source) => (
-            <label key={source}>
-              <input
-                type="checkbox"
-                checked={sources.includes(source)}
-                onChange={() => setSources((s) => toggle(s, source))}
-              />
-              {source}
-            </label>
+            <Checkbox
+              key={source}
+              checked={sources.includes(source)}
+              onCheckedChange={() => setSources((s) => toggle(s, source))}
+              label={source}
+            />
           ))}
         </div>
         <div className="inbox-filter-toggles" aria-label="Track filters">
           {TRACKS.map((track) => (
-            <label key={track}>
-              <input
-                type="checkbox"
-                checked={tracks.includes(track)}
-                onChange={() => setTracks((t) => toggle(t, track))}
-              />
-              Track {track}
-            </label>
+            <Checkbox
+              key={track}
+              checked={tracks.includes(track)}
+              onCheckedChange={() => setTracks((t) => toggle(t, track))}
+              label={`Track ${track}`}
+            />
           ))}
         </div>
       </div>

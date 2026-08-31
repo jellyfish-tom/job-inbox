@@ -1,5 +1,6 @@
 "use client";
 
+import { Button, TextInput } from "@proteus-ui/core";
 import { useState } from "react";
 import { login } from "./actions";
 
@@ -16,10 +17,12 @@ export default function LoginPage() {
   return (
     <main>
       <h1>Login</h1>
-      <form action={handleSubmit}>
+      <form className="login-form" action={handleSubmit}>
         <label htmlFor="password">Password</label>
-        <input id="password" name="password" type="password" required />
-        <button type="submit">Log in</button>
+        <TextInput id="password" name="password" type="password" required />
+        <Button type="submit" intent="primary">
+          Log in
+        </Button>
         {error ? <p role="alert">{error}</p> : null}
       </form>
     </main>

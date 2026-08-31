@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
@@ -15,10 +15,16 @@
   "packageManager": "bun@1.4.0",
   "dependencies": {
     "@libsql/client": "^0.15.15",
+    "@proteus-ui/core": "file:./vendor/proteus/packages/core",
+    "@proteus-ui/theme-default": "file:./vendor/proteus/packages/theme-default",
+    "@proteus-ui/tokens": "file:./vendor/proteus/packages/tokens",
     "next": "16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "server-only": "^0.0.1"
+  },
+  "overrides": {
+    "@proteus-ui/tokens": "file:./vendor/proteus/packages/tokens"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
