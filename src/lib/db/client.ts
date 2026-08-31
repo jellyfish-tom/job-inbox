@@ -1,3 +1,4 @@
+import "@libsql/isomorphic-ws";
 import { createClient } from "@libsql/client";
 
 let client: ReturnType<typeof createClient> | null = null;

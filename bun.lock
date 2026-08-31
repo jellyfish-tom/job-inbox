@@ -6,6 +6,8 @@
       "name": "job-inbox",
       "dependencies": {
         "@libsql/client": "^0.15.15",
+        "@libsql/isomorphic-fetch": "^0.3.1",
+        "@libsql/isomorphic-ws": "^0.1.5",
         "@proteus-ui/core": "file:./vendor/proteus/packages/core",
         "@proteus-ui/theme-default": "file:./vendor/proteus/packages/theme-default",
         "@proteus-ui/tokens": "file:./vendor/proteus/packages/tokens",
