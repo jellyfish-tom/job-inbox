@@ -8,6 +8,7 @@ export function ApplyButton({ id, url }: { id: string; url: string }) {
     <Button
       type="button"
       intent="primary"
+      size="sm"
       onClick={async () => {
         window.open(url, "_blank", "noopener,noreferrer");
         await applyJobAction(id);

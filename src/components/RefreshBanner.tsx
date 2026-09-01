@@ -79,7 +79,7 @@ export function RefreshBanner({ runs }: { runs: RefreshRunRow[] }) {
                       <span className="refresh-time-placeholder" />
                     )}
                     <RefreshStat value={counts?.fetched ?? null} label="fetched" />
-                    <RefreshStat value={counts?.inserted ?? null} label="new" />
+                    <RefreshStat value={counts?.inserted ?? null} label="added" />
                     <RefreshStat value={counts?.rejected ?? null} label="rejected" />
                     <RefreshStat value={counts?.skipped ?? null} label="skipped" />
                     <span className="refresh-actions">

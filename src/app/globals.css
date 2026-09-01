@@ -216,8 +216,17 @@ body {
   font-size: 0.875rem;
 }
 
-.job-details details {
+.job-details details,
+.job-requireds {
   margin-top: 0.25rem;
+}
+
+.job-details details:not([open]) > :not(summary) {
+  display: none;
+}
+
+.job-requireds {
+  margin-bottom: 0;
 }
 
 .job-actions {

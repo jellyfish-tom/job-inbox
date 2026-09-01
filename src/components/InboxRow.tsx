@@ -4,6 +4,8 @@ import { ApplyButton } from "@/components/ApplyButton";
 import type { JobRow } from "@/lib/db/queries";
 import { formatSalary } from "@/lib/salary";
 
+const REQUIRED_PREVIEW = 5;
+
 function SkillDetails({
   label,
   skills,
@@ -17,6 +19,24 @@ function SkillDetails({
       <summary>{label}</summary>
       <ul>
         {skills.map((skill) => (
+          <li key={skill}>{skill}</li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
+function RequiredSkills({ skills }: { skills: string[] }) {
+  if (skills.length === 0) return null;
+  const preview = skills.slice(0, REQUIRED_PREVIEW).join(", ");
+  if (skills.length <= REQUIRED_PREVIEW) {
+    return <p className="job-requireds">{preview}</p>;
+  }
+  return (
+    <details>
+      <summary>{preview}</summary>
+      <ul>
+        {skills.slice(REQUIRED_PREVIEW).map((skill) => (
           <li key={skill}>{skill}</li>
         ))}
       </ul>
@@ -51,7 +71,7 @@ export function InboxRow({ job }: { job: JobRow }) {
         <div className="job-actions">
           <ApplyButton id={job.id} url={job.url} />
           <form action={rejectJobAction.bind(null, job.id)}>
-            <Button type="submit" intent="danger">
+            <Button type="submit" intent="danger" size="sm">
               Reject
             </Button>
           </form>
@@ -60,7 +80,7 @@ export function InboxRow({ job }: { job: JobRow }) {
     >
       {hasSkills ? (
         <div className="job-details">
-          <SkillDetails label="Hard required" skills={job.hardRequired} />
+          <RequiredSkills skills={job.hardRequired} />
           <SkillDetails label="Hard nice" skills={job.hardNice} />
           <SkillDetails label="Soft required" skills={job.softRequired} />
           <SkillDetails label="Soft nice" skills={job.softNice} />

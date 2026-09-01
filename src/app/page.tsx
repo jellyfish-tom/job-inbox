@@ -33,7 +33,7 @@ export default async function Home() {
         <RefreshBanner runs={runs} />
       </header>
 
-      <Section title="Offers">
+      <Section title={`Offers (${jobs.length})`}>
         {jobs.length === 0 ? (
           <p className="empty-state">No jobs in inbox.</p>
         ) : (
