@@ -59,9 +59,7 @@ export function InboxFilter({ jobs }: { jobs: JobRow[] }) {
       ) : (
         <ul className="job-list">
           {filtered.map((job) => (
-            <li key={job.id}>
-              <InboxRow job={job} />
-            </li>
+            <InboxRow key={job.id} job={job} />
           ))}
         </ul>
       )}

@@ -1,6 +1,9 @@
-import { Button, Card } from "@proteus-ui/core";
-import { rejectJobAction } from "@/app/actions/jobs";
+"use client";
+
+import { Button, Card, Spinner } from "@proteus-ui/core";
+import { applyJobAction, rejectJobAction } from "@/app/actions/jobs";
 import { ApplyButton } from "@/components/ApplyButton";
+import { useOfferExit } from "@/hooks/use-offer-exit";
 import type { JobRow } from "@/lib/db/queries";
 import { formatSalary } from "@/lib/salary";
 
@@ -46,14 +49,20 @@ function RequiredSkills({ skills }: { skills: string[] }) {
 
 export function InboxRow({ job }: { job: JobRow }) {
   const salary = formatSalary(job);
+  const { phase, which, minWidth, run } = useOfferExit();
+  const busy = phase !== "idle";
   const hasSkills =
     job.hardRequired.length > 0 ||
     job.hardNice.length > 0 ||
     job.softRequired.length > 0 ||
     job.softNice.length > 0;
 
+  if (phase === "gone") return null;
+
   return (
-    <Card
+    <li className={`offer-exit${phase === "exiting" ? " offer-exit--out" : ""}`}>
+      <div className="offer-exit-inner">
+        <Card
       title={
         <div className="job-heading">
           <div>
@@ -69,12 +78,39 @@ export function InboxRow({ job }: { job: JobRow }) {
       }
       footer={
         <div className="job-actions">
-          <ApplyButton id={job.id} url={job.url} />
-          <form action={rejectJobAction.bind(null, job.id)}>
-            <Button type="submit" intent="danger" size="sm">
-              Reject
-            </Button>
-          </form>
+          <ApplyButton
+            url={job.url}
+            pending={which === "apply"}
+            disabled={busy}
+            minWidth={which === "apply" ? minWidth : undefined}
+            onApply={(button) => {
+              void run(
+                "apply",
+                button,
+                () => applyJobAction(job.id),
+                `Applied ${job.title}`,
+                `Could not apply ${job.title}`,
+              );
+            }}
+          />
+          <Button
+            type="button"
+            intent="danger"
+            size="sm"
+            disabled={busy}
+            style={which === "reject" && minWidth != null ? { minWidth } : undefined}
+            onClick={(event) => {
+              void run(
+                "reject",
+                event.currentTarget,
+                () => rejectJobAction(job.id),
+                `Rejected ${job.title}`,
+                `Could not reject ${job.title}`,
+              );
+            }}
+          >
+            {which === "reject" ? <Spinner size="sm" /> : "Reject"}
+          </Button>
         </div>
       }
     >
@@ -86,6 +122,8 @@ export function InboxRow({ job }: { job: JobRow }) {
           <SkillDetails label="Soft nice" skills={job.softNice} />
         </div>
       ) : null}
-    </Card>
+        </Card>
+      </div>
+    </li>
   );
 }

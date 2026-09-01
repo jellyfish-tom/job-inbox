@@ -1,20 +1,33 @@
 "use client";
 
-import { Button } from "@proteus-ui/core";
-import { applyJobAction } from "@/app/actions/jobs";
+import { Button, Spinner } from "@proteus-ui/core";
 
-export function ApplyButton({ id, url }: { id: string; url: string }) {
+export function ApplyButton({
+  url,
+  pending,
+  disabled,
+  minWidth,
+  onApply,
+}: {
+  url: string;
+  pending: boolean;
+  disabled?: boolean;
+  minWidth?: number;
+  onApply: (button: HTMLButtonElement) => void;
+}) {
   return (
     <Button
       type="button"
       intent="primary"
       size="sm"
-      onClick={async () => {
+      disabled={disabled}
+      style={minWidth != null ? { minWidth } : undefined}
+      onClick={(event) => {
         window.open(url, "_blank", "noopener,noreferrer");
-        await applyJobAction(id);
+        onApply(event.currentTarget);
       }}
     >
-      Apply
+      {pending ? <Spinner size="sm" /> : "Apply"}
     </Button>
   );
 }

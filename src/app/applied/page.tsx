@@ -7,7 +7,7 @@ export default async function AppliedPage() {
   return (
     <main className="page">
       <header className="page-header">
-        <h1>Applied</h1>
+        <h1>Applied ({jobs.length})</h1>
       </header>
 
       {jobs.length === 0 ? (
@@ -15,9 +15,7 @@ export default async function AppliedPage() {
       ) : (
         <ul className="job-list">
           {jobs.map((job) => (
-            <li key={job.id}>
-              <AppliedRow job={job} />
-            </li>
+            <AppliedRow key={job.id} job={job} />
           ))}
         </ul>
       )}

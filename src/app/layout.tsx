@@ -6,6 +6,7 @@ import "@proteus-ui/theme-default/theme.css";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { logout } from "@/app/actions/logout";
+import { Toasts } from "@/components/Toasts";
 import { COOKIE, verifySession } from "@/lib/auth";
 import "./globals.css";
 
@@ -31,6 +32,7 @@ export default async function RootLayout({
           </nav>
         ) : null}
         {children}
+        <Toasts />
       </body>
     </html>
   );
