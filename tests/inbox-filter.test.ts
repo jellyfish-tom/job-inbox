@@ -10,7 +10,6 @@ function row(overrides: Partial<JobRow>): JobRow {
     url: "https://x/1",
     title: "Senior React Engineer",
     company: "Acme",
-    track: "A",
     salaryMin: null,
     salaryMax: null,
     salaryCurrency: null,
@@ -31,23 +30,31 @@ function row(overrides: Partial<JobRow>): JobRow {
 }
 
 const jobs: JobRow[] = [
-  row({ id: "1", source: "remoteok", track: "A", title: "Senior React Engineer" }),
-  row({ id: "2", source: "justjoin", track: "B", title: "Vue Developer", hardRequired: ["vue"] }),
-  row({ id: "3", source: "wwr", track: "A", title: "Staff Frontend", company: "Globex" }),
+  row({ id: "1", source: "remoteok", title: "Senior React Engineer" }),
+  row({
+    id: "2",
+    source: "justjoin",
+    title: "Vue Developer",
+    hardRequired: ["vue"],
+  }),
+  row({ id: "3", source: "wwr", title: "Staff Frontend", company: "Globex" }),
 ];
 
 test("empty query returns all", () => {
-  expect(filterJobs(jobs, { text: "", sources: [], tracks: [] })).toHaveLength(3);
+  expect(filterJobs(jobs, { text: "", sources: [] })).toHaveLength(3);
 });
 
 test("text matches title, company, and tags", () => {
-  expect(filterJobs(jobs, { text: "react", sources: [], tracks: [] }).map((j) => j.id)).toEqual(["1"]);
-  expect(filterJobs(jobs, { text: "globex", sources: [], tracks: [] }).map((j) => j.id)).toEqual(["3"]);
-  expect(filterJobs(jobs, { text: "vue", sources: [], tracks: [] }).map((j) => j.id)).toEqual(["2"]);
+  expect(filterJobs(jobs, { text: "react", sources: [] }).map((j) => j.id)).toEqual(["1"]);
+  expect(filterJobs(jobs, { text: "globex", sources: [] }).map((j) => j.id)).toEqual(["3"]);
+  expect(filterJobs(jobs, { text: "vue", sources: [] }).map((j) => j.id)).toEqual(["2"]);
 });
 
-test("source and track filters combine (AND)", () => {
-  expect(filterJobs(jobs, { text: "", sources: ["justjoin"], tracks: [] }).map((j) => j.id)).toEqual(["2"]);
-  expect(filterJobs(jobs, { text: "", sources: [], tracks: ["A"] }).map((j) => j.id)).toEqual(["1", "3"]);
-  expect(filterJobs(jobs, { text: "", sources: ["remoteok"], tracks: ["B"] })).toHaveLength(0);
+test("source filter narrows the list", () => {
+  expect(
+    filterJobs(jobs, { text: "", sources: ["justjoin"] }).map((j) => j.id),
+  ).toEqual(["2"]);
+  expect(
+    filterJobs(jobs, { text: "", sources: ["remoteok"] }).map((j) => j.id),
+  ).toEqual(["1"]);
 });

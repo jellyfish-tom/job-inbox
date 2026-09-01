@@ -1,6 +1,18 @@
-import type { NormalizedJob } from "@/types/job";
+import type { NormalizedJob, SourceCapabilities, SourceFilter } from "@/types/job";
 import { requireUrl } from "@/lib/url";
 import type { SourceAdapter } from "./types";
+
+export const wwrCapabilities: SourceCapabilities = {
+  source: "wwr",
+  fields: [
+    {
+      id: "title",
+      label: "Title tokens",
+      kind: "match",
+      valueType: "tokens",
+    },
+  ],
+};
 
 export type RssItem = {
   title: string;
@@ -10,7 +22,7 @@ export type RssItem = {
 };
 
 const LISTINGS_URL =
-  "https://weworkremotely.com/categories/remote-front-end-programming-jobs.rss";
+  "https://weworkremotely.com/categories/remote-programming-jobs.rss";
 
 function extractTag(block: string, tag: string): string | null {
   const re = new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`, "i");
@@ -61,7 +73,6 @@ export function normalize(raw: unknown): NormalizedJob {
     url: validUrl,
     title,
     company,
-    track: "A",
     description: item.description,
     location: "",
     contractType: null,
@@ -78,9 +89,22 @@ export function normalize(raw: unknown): NormalizedJob {
   };
 }
 
+export function matchFields(
+  _raw: unknown,
+  job: NormalizedJob,
+): Record<string, string[]> {
+  const title = job.title;
+  const titles = [title];
+  if (/front[\s-]?end/i.test(title)) {
+    titles.push("frontend");
+  }
+  return { title: titles };
+}
+
 export const wwrAdapter: SourceAdapter = {
   source: "wwr",
-  async fetchListings() {
+  capabilities: wwrCapabilities,
+  async fetchListings(_filter: SourceFilter) {
     const res = await fetch(LISTINGS_URL, {
       headers: { "User-Agent": "job-inbox/0.1" },
     });
@@ -90,4 +114,5 @@ export const wwrAdapter: SourceAdapter = {
     return parseRssItems(await res.text());
   },
   normalize,
+  matchFields,
 };

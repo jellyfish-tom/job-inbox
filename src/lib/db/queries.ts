@@ -1,7 +1,8 @@
 import { getDb } from "@/lib/db/client";
 import { normalizeUrl } from "@/lib/url";
-import { DEFAULT_FILTERS } from "@/lib/filter-defaults";
-import type { JobStatus, NormalizedJob, SourceId, Track, TrackFilter } from "@/types/job";
+import { DEFAULT_SOURCE_FILTERS } from "@/lib/filter-defaults";
+import type { JobStatus, NormalizedJob, SourceFilter, SourceId } from "@/types/job";
+import { SOURCE_IDS } from "@/types/job";
 
 export type JobRow = Omit<
   NormalizedJob,
@@ -84,7 +85,6 @@ function mapJobRow(row: JobDbRow): JobRow {
     url: row.url,
     title: row.title,
     company: row.company,
-    track: row.track as JobRow["track"],
     salaryMin: row.salary_min,
     salaryMax: row.salary_max,
     salaryCurrency: row.salary_currency,
@@ -188,6 +188,14 @@ export async function getWatermark(source: SourceId): Promise<string | null> {
   return value == null ? null : String(value);
 }
 
+export async function countJobsForSource(source: SourceId): Promise<number> {
+  const result = await getDb().execute({
+    sql: "SELECT count(*) AS c FROM jobs WHERE source = ?",
+    args: [source],
+  });
+  return Number(result.rows[0]?.c ?? 0);
+}
+
 export async function getJobBySourceExternalId(
   source: SourceId,
   externalId: string,
@@ -195,6 +203,33 @@ export async function getJobBySourceExternalId(
   const result = await getDb().execute({
     sql: "SELECT * FROM jobs WHERE source = ? AND external_id = ?",
     args: [source, externalId],
+  });
+  if (result.rows.length === 0) return null;
+  return mapJobRow(result.rows[0] as unknown as JobDbRow);
+}
+
+export async function findJobForUpsert(
+  job: NormalizedJob,
+  aliases: string[] = [],
+): Promise<JobRow | null> {
+  const keys = [...new Set([job.externalId, ...aliases].filter(Boolean))];
+  for (const key of keys) {
+    const row = await getJobBySourceExternalId(job.source, key);
+    if (row) return row;
+  }
+
+  if (job.source !== "nofluff" || keys.length === 0) return null;
+
+  const placeholders = keys.map(() => "?").join(", ");
+  const result = await getDb().execute({
+    sql: `SELECT * FROM jobs
+          WHERE source = ?
+            AND (
+              json_extract(raw_json, '$.reference') IN (${placeholders})
+              OR json_extract(raw_json, '$.id') IN (${placeholders})
+            )
+          LIMIT 1`,
+      args: [job.source, ...keys, ...keys],
   });
   if (result.rows.length === 0) return null;
   return mapJobRow(result.rows[0] as unknown as JobDbRow);
@@ -214,10 +249,7 @@ export async function upsertJob(
   job: NormalizedJob,
   existing: JobRow | null,
 ): Promise<{ id: string; outcome: "inserted" | "updated" | "deduped" }> {
-  if (
-    existing &&
-    (existing.source !== job.source || existing.externalId !== job.externalId)
-  ) {
+  if (existing && existing.source !== job.source) {
     throw new Error(
       `upsertJob: existing row (${existing.source}/${existing.externalId}) does not match job (${job.source}/${job.externalId})`,
     );
@@ -228,12 +260,14 @@ export async function upsertJob(
   if (existing) {
     await getDb().execute({
       sql: `UPDATE jobs
-            SET title = ?, company = ?,
+            SET external_id = ?, url = ?, title = ?, company = ?,
                 salary_min = ?, salary_max = ?, salary_currency = ?, salary_raw = ?,
                 hard_required = ?, hard_nice = ?, soft_required = ?, soft_nice = ?,
                 raw_json = ?, last_seen_at = ?
             WHERE id = ?`,
       args: [
+        job.externalId,
+        job.url,
         job.title,
         job.company,
         job.salaryMin,
@@ -274,7 +308,7 @@ export async function upsertJob(
       job.url,
       job.title,
       job.company,
-      job.track,
+      "-",
       job.salaryMin,
       job.salaryMax,
       job.salaryCurrency,
@@ -357,63 +391,60 @@ export async function listLatestRuns(): Promise<RefreshRunRow[]> {
   );
 }
 
-function isTrackFilter(value: unknown): value is TrackFilter {
+function isSourceFilter(value: unknown): value is SourceFilter {
   if (typeof value !== "object" || value === null) return false;
   const obj = value as Record<string, unknown>;
-  if (!Array.isArray(obj.requiredGroups) || !Array.isArray(obj.exclude)) {
-    return false;
-  }
+  if (!Array.isArray(obj.exclude)) return false;
   if (!obj.exclude.every((e) => typeof e === "string")) return false;
-  return obj.requiredGroups.every((group) => {
-    if (typeof group !== "object" || group === null) return false;
-    const g = group as Record<string, unknown>;
-    return (
-      typeof g.label === "string" &&
-      Array.isArray(g.keywords) &&
-      g.keywords.every((k) => typeof k === "string")
-    );
-  });
+  if (obj.values == null || typeof obj.values !== "object") return false;
+  return Object.values(obj.values as Record<string, unknown>).every(
+    (tokens) =>
+      Array.isArray(tokens) && tokens.every((t) => typeof t === "string"),
+  );
 }
 
-export async function getFilterConfig(track: Track): Promise<TrackFilter> {
+export async function getSourceFilter(source: SourceId): Promise<SourceFilter> {
   const result = await getDb().execute({
-    sql: "SELECT config FROM filter_config WHERE track = ?",
-    args: [track],
+    sql: "SELECT config FROM source_filter_config WHERE source = ?",
+    args: [source],
   });
   const raw = result.rows[0]?.config;
-  if (raw == null) return DEFAULT_FILTERS[track];
+  if (raw == null) return DEFAULT_SOURCE_FILTERS[source];
   try {
     const parsed: unknown = JSON.parse(String(raw));
-    return isTrackFilter(parsed) ? parsed : DEFAULT_FILTERS[track];
+    return isSourceFilter(parsed)
+      ? parsed
+      : DEFAULT_SOURCE_FILTERS[source];
   } catch {
-    return DEFAULT_FILTERS[track];
+    return DEFAULT_SOURCE_FILTERS[source];
   }
 }
 
-export async function getAllFilterConfigs(): Promise<Record<Track, TrackFilter>> {
-  const [a, b] = await Promise.all([
-    getFilterConfig("A"),
-    getFilterConfig("B"),
-  ]);
-  return { A: a, B: b };
+export async function getAllSourceFilters(): Promise<
+  Record<SourceId, SourceFilter>
+> {
+  const entries = await Promise.all(
+    SOURCE_IDS.map(async (source) => [source, await getSourceFilter(source)] as const),
+  );
+  return Object.fromEntries(entries) as Record<SourceId, SourceFilter>;
 }
 
-export async function saveFilterConfig(
-  track: Track,
-  config: TrackFilter,
+export async function saveSourceFilter(
+  source: SourceId,
+  config: SourceFilter,
 ): Promise<void> {
   await getDb().execute({
-    sql: `INSERT INTO filter_config (track, config, updated_at)
+    sql: `INSERT INTO source_filter_config (source, config, updated_at)
           VALUES (?, ?, ?)
-          ON CONFLICT(track) DO UPDATE
+          ON CONFLICT(source) DO UPDATE
             SET config = excluded.config, updated_at = excluded.updated_at`,
-    args: [track, JSON.stringify(config), now()],
+    args: [source, JSON.stringify(config), now()],
   });
 }
 
-export async function resetFilterConfig(track: Track): Promise<void> {
+export async function resetSourceFilter(source: SourceId): Promise<void> {
   await getDb().execute({
-    sql: "DELETE FROM filter_config WHERE track = ?",
-    args: [track],
+    sql: "DELETE FROM source_filter_config WHERE source = ?",
+    args: [source],
   });
 }

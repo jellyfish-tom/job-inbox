@@ -5,19 +5,25 @@ import { useMemo, useState } from "react";
 import { InboxRow } from "@/components/InboxRow";
 import type { JobRow } from "@/lib/db/queries";
 import { filterJobs } from "@/lib/inbox-filter";
-import { SOURCE_IDS, type SourceId, type Track } from "@/types/job";
-
-const TRACKS: Track[] = ["A", "B"];
+import { SOURCE_IDS, type SourceId } from "@/types/job";
 
 export function InboxFilter({ jobs }: { jobs: JobRow[] }) {
   const [text, setText] = useState("");
   const [sources, setSources] = useState<SourceId[]>([]);
-  const [tracks, setTracks] = useState<Track[]>([]);
 
   const filtered = useMemo(
-    () => filterJobs(jobs, { text, sources, tracks }),
-    [jobs, text, sources, tracks],
+    () => filterJobs(jobs, { text, sources }),
+    [jobs, text, sources],
   );
+
+  const sourceCounts = useMemo(() => {
+    const counts = Object.fromEntries(SOURCE_IDS.map((id) => [id, 0])) as Record<
+      SourceId,
+      number
+    >;
+    for (const job of jobs) counts[job.source] += 1;
+    return counts;
+  }, [jobs]);
 
   function toggle<T>(list: T[], value: T): T[] {
     return list.includes(value)
@@ -40,17 +46,7 @@ export function InboxFilter({ jobs }: { jobs: JobRow[] }) {
               key={source}
               checked={sources.includes(source)}
               onCheckedChange={() => setSources((s) => toggle(s, source))}
-              label={source}
-            />
-          ))}
-        </div>
-        <div className="inbox-filter-toggles" aria-label="Track filters">
-          {TRACKS.map((track) => (
-            <Checkbox
-              key={track}
-              checked={tracks.includes(track)}
-              onCheckedChange={() => setTracks((t) => toggle(t, track))}
-              label={`Track ${track}`}
+              label={`${source} (${sourceCounts[source]})`}
             />
           ))}
         </div>

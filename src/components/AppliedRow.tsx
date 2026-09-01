@@ -47,7 +47,7 @@ export function AppliedRow({ job }: { job: JobRow }) {
             {job.title}
           </a>
           <span className="job-meta">
-            {job.company} · {job.source} · Track {job.track}
+            {job.company} · {job.source}
           </span>
           {job.appliedAt ? (
             <time dateTime={job.appliedAt} suppressHydrationWarning>

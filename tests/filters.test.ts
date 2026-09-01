@@ -1,69 +1,142 @@
 import { expect, test } from "vitest";
-import { DEFAULT_FILTERS, sanitizeTrackFilter } from "@/lib/filter-defaults";
-import { isInstantReject, matchesCriteria } from "@/lib/filters";
-import type { FilterInput, TrackFilter } from "@/types/job";
+import { sanitizeSourceFilter } from "@/lib/filter-defaults";
+import { matchesSource, toMatchInput } from "@/lib/filters";
+import type { SourceCapabilities, SourceFilter } from "@/types/job";
 
-const baseA: FilterInput = {
-  title: "Senior Frontend Engineer",
-  company: "Acme",
-  description: "React TypeScript fully remote CET",
-  location: "European Union",
-  tags: ["react", "typescript", "remote"],
-  track: "A",
-  contractType: null,
-  timezone: "CET",
+const caps: SourceCapabilities = {
+  source: "justjoin",
+  fields: [
+    {
+      id: "skills",
+      label: "Skills",
+      kind: "both",
+      valueType: "tokens",
+      queryKey: "skills",
+    },
+    {
+      id: "experienceLevels",
+      label: "Experience",
+      kind: "fetch",
+      valueType: "enum",
+      queryKey: "experienceLevels",
+    },
+    {
+      id: "workplaceType",
+      label: "Workplace",
+      kind: "match",
+      valueType: "enum",
+    },
+  ],
 };
 
-test("default A accepts clean remote senior FE", () => {
-  expect(isInstantReject(baseA, DEFAULT_FILTERS.A)).toBe(false);
-  expect(matchesCriteria(baseA, DEFAULT_FILTERS.A)).toBe(true);
-});
+function input(
+  fields: Record<string, string[]>,
+  extra: Partial<{ title: string; description: string; tags: string[] }> = {},
+) {
+  return toMatchInput(
+    extra.title ?? "Senior React Developer",
+    extra.description ?? "",
+    extra.tags ?? ["React"],
+    fields,
+  );
+}
 
-test("default A excludes hybrid / on-site / 3 days", () => {
+test("OR in field and AND across present fields", () => {
+  const filter: SourceFilter = {
+    values: { skills: ["React", "TypeScript"], workplaceType: ["remote"] },
+    exclude: [],
+  };
   expect(
-    isInstantReject({ ...baseA, description: "hybrid 3 days in office" }, DEFAULT_FILTERS.A),
+    matchesSource(
+      input({ skills: ["TypeScript"], workplaceType: ["remote"] }),
+      filter,
+      caps,
+    ),
   ).toBe(true);
-  expect(isInstantReject({ ...baseA, location: "on-site Warsaw" }, DEFAULT_FILTERS.A)).toBe(true);
-});
-
-test("default A rejects when a required group is unmet", () => {
   expect(
-    matchesCriteria({ ...baseA, title: "Backend Dev", tags: ["java"], description: "Java remote" }, DEFAULT_FILTERS.A),
+    matchesSource(
+      input({ skills: ["Java"], workplaceType: ["remote"] }),
+      filter,
+      caps,
+    ),
+  ).toBe(false);
+  expect(
+    matchesSource(
+      input({ skills: ["React"], workplaceType: ["office"] }),
+      filter,
+      caps,
+    ),
   ).toBe(false);
 });
 
-test("default B accepts polish b2b remote senior react", () => {
-  const b: FilterInput = {
-    ...baseA,
-    track: "B",
-    title: "React Developer",
-    tags: ["react"],
-    description: "senior fully remote",
-    location: "Poland",
-    contractType: "b2b",
+test("missing and any pass a required field", () => {
+  const filter: SourceFilter = {
+    values: { workplaceType: ["remote"], skills: ["React"] },
+    exclude: [],
   };
-  expect(matchesCriteria(b, DEFAULT_FILTERS.B)).toBe(true);
-  expect(matchesCriteria({ ...b, location: "European Union", description: "senior remote" }, DEFAULT_FILTERS.B)).toBe(false);
-  expect(matchesCriteria({ ...b, contractType: null, description: "senior fully remote uop" }, DEFAULT_FILTERS.B)).toBe(false);
+  expect(
+    matchesSource(input({ skills: ["React"], workplaceType: [] }), filter, caps),
+  ).toBe(true);
+  expect(
+    matchesSource(
+      input({ skills: ["React"], workplaceType: ["any"] }),
+      filter,
+      caps,
+    ),
+  ).toBe(true);
 });
 
-test("empty requiredGroups accepts everything; a group with only an exclude match rejects", () => {
-  const acceptAll: TrackFilter = { requiredGroups: [], exclude: [] };
-  expect(matchesCriteria({ ...baseA, title: "anything" }, acceptAll)).toBe(true);
-  const excludeInterns: TrackFilter = { requiredGroups: [], exclude: ["intern"] };
-  expect(isInstantReject({ ...baseA, title: "Intern" }, excludeInterns)).toBe(true);
+test("empty values skip the field; fetch-only fields are not matched", () => {
+  const filter: SourceFilter = {
+    values: { workplaceType: [], experienceLevels: ["senior"] },
+    exclude: [],
+  };
+  expect(
+    matchesSource(
+      input({ skills: ["Java"], workplaceType: ["office"] }),
+      filter,
+      caps,
+    ),
+  ).toBe(true);
 });
 
-test("sanitizeTrackFilter drops empty keywords and empty groups", () => {
-  const dirty: TrackFilter = {
-    requiredGroups: [
-      { label: " Stack ", keywords: [" react ", "", "  "] },
-      { label: "Empty", keywords: ["", "  "] },
-    ],
-    exclude: ["hybrid", "", " "],
+test("exclude hits title, description, and tags only", () => {
+  const filter: SourceFilter = {
+    values: {},
+    exclude: ["hybrid"],
   };
-  expect(sanitizeTrackFilter(dirty)).toEqual({
-    requiredGroups: [{ label: "Stack", keywords: ["react"] }],
+  expect(
+    matchesSource(input({}, { description: "hybrid 3 days" }), filter, caps),
+  ).toBe(false);
+  expect(
+    matchesSource(input({}, { title: "Hybrid Lead" }), filter, caps),
+  ).toBe(false);
+  expect(
+    matchesSource(input({}, { tags: ["hybrid"] }), filter, caps),
+  ).toBe(false);
+  expect(
+    matchesSource(
+      input({ workplaceType: ["hybrid"] }, { description: "fully remote" }),
+      filter,
+      caps,
+    ),
+  ).toBe(true);
+});
+
+test("sanitizeSourceFilter drops unknown ids, blanks, and duplicate case", () => {
+  expect(
+    sanitizeSourceFilter(
+      {
+        values: {
+          skills: [" React ", "react", ""],
+          nope: ["x"],
+        },
+        exclude: ["hybrid", "", " Hybrid "],
+      },
+      ["skills", "workplaceType"],
+    ),
+  ).toEqual({
+    values: { skills: ["React"] },
     exclude: ["hybrid"],
   });
 });

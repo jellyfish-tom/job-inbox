@@ -2,17 +2,7 @@ import { Button, Card } from "@proteus-ui/core";
 import { rejectJobAction } from "@/app/actions/jobs";
 import { ApplyButton } from "@/components/ApplyButton";
 import type { JobRow } from "@/lib/db/queries";
-
-function formatSalary(job: JobRow): string | null {
-  if (job.salaryRaw) return job.salaryRaw;
-  if (job.salaryMin != null || job.salaryMax != null) {
-    const min = job.salaryMin ?? "";
-    const max = job.salaryMax ?? "";
-    const currency = job.salaryCurrency ?? "";
-    return `${min}–${max} ${currency}`.trim();
-  }
-  return null;
-}
+import { formatSalary } from "@/lib/salary";
 
 function SkillDetails({
   label,
@@ -36,8 +26,7 @@ function SkillDetails({
 
 export function InboxRow({ job }: { job: JobRow }) {
   const salary = formatSalary(job);
-  const hasDetails =
-    salary != null ||
+  const hasSkills =
     job.hardRequired.length > 0 ||
     job.hardNice.length > 0 ||
     job.softRequired.length > 0 ||
@@ -46,14 +35,17 @@ export function InboxRow({ job }: { job: JobRow }) {
   return (
     <Card
       title={
-        <>
-          <a href={job.url} target="_blank" rel="noreferrer">
-            {job.title}
-          </a>
-          <span className="job-meta">
-            {job.company} · {job.source} · Track {job.track}
-          </span>
-        </>
+        <div className="job-heading">
+          <div>
+            <a href={job.url} target="_blank" rel="noreferrer">
+              {job.title}
+            </a>
+            <span className="job-meta">
+              {job.company} · {job.source}
+            </span>
+          </div>
+          <span className="job-salary">{salary}</span>
+        </div>
       }
       footer={
         <div className="job-actions">
@@ -66,14 +58,8 @@ export function InboxRow({ job }: { job: JobRow }) {
         </div>
       }
     >
-      {hasDetails ? (
+      {hasSkills ? (
         <div className="job-details">
-          {salary ? (
-            <details>
-              <summary>Salary</summary>
-              <p>{salary}</p>
-            </details>
-          ) : null}
           <SkillDetails label="Hard required" skills={job.hardRequired} />
           <SkillDetails label="Hard nice" skills={job.hardNice} />
           <SkillDetails label="Soft required" skills={job.softRequired} />

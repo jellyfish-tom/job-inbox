@@ -1,6 +1,6 @@
-import type { NormalizedJob } from "@/types/job";
+import type { NormalizedJob, SourceCapabilities, SourceFilter } from "@/types/job";
 import { requireUrl } from "@/lib/url";
-import type { SourceAdapter } from "./types";
+import { joinFilterTokens, type SourceAdapter } from "./types";
 
 type HimalayasRaw = {
   title?: string;
@@ -14,10 +14,93 @@ type HimalayasRaw = {
   description?: string;
   locationRestrictions?: string[];
   pubDate?: string;
+  seniority?: string[];
+  employmentType?: string;
 };
 
-const LISTINGS_URL =
-  "https://himalayas.app/jobs/api/search?q=react&seniority=Senior&sort=recent&limit=20";
+const TITLE_PREFIX = /^(senior|junior|jr|mid|staff|principal|remote|lead)-/i;
+const ROLE_SUFFIX =
+  /(engineer|developer|designer|manager|specialist|architect|lead|jobs)$/i;
+const SKILL_SUFFIX = /-(development|engineering)$/i;
+
+export const himalayasCapabilities: SourceCapabilities = {
+  source: "himalayas",
+  fields: [
+    {
+      id: "q",
+      label: "Search",
+      kind: "fetch",
+      valueType: "tokens",
+      queryKey: "q",
+    },
+    {
+      id: "seniority",
+      label: "Seniority",
+      kind: "fetch",
+      valueType: "enum",
+      enumValues: [
+        "Entry-level",
+        "Mid-level",
+        "Senior",
+        "Manager",
+        "Director",
+        "Executive",
+      ],
+      queryKey: "seniority",
+    },
+    {
+      id: "categories",
+      label: "Categories",
+      kind: "match",
+      valueType: "tokens",
+    },
+    {
+      id: "employmentType",
+      label: "Employment type",
+      kind: "match",
+      valueType: "enum",
+      enumValues: [
+        "Full Time",
+        "Part Time",
+        "Contractor",
+        "Temporary",
+        "Intern",
+        "Volunteer",
+        "Other",
+      ],
+    },
+  ],
+};
+
+function skillCategories(categories: string[]): string[] {
+  return categories.filter((c) => {
+    if (/[()]/.test(c) || TITLE_PREFIX.test(c)) return false;
+    if (SKILL_SUFFIX.test(c)) return true;
+    return !(ROLE_SUFFIX.test(c) && c.includes("-"));
+  });
+}
+
+export function himalayasSearchUrl(filter: SourceFilter): string {
+  const url = new URL("https://himalayas.app/jobs/api/search");
+  const q = joinFilterTokens(filter.values.q);
+  if (q) url.searchParams.set("q", q);
+  const seniority = (filter.values.seniority ?? []).filter(Boolean).join(",");
+  if (seniority) url.searchParams.set("seniority", seniority);
+  url.searchParams.set("sort", "recent");
+  url.searchParams.set("limit", "20");
+  return url.toString();
+}
+
+export function matchFields(
+  raw: unknown,
+  job: NormalizedJob,
+): Record<string, string[]> {
+  const item = raw as HimalayasRaw;
+  return {
+    categories: skillCategories(item.categories ?? job.hardRequired),
+    employmentType: item.employmentType ? [item.employmentType] : [],
+  };
+}
 
 export function normalize(raw: unknown): NormalizedJob {
   const item = raw as HimalayasRaw;
@@ -33,15 +116,14 @@ export function normalize(raw: unknown): NormalizedJob {
     url: requireUrl(url),
     title,
     company: item.companyName ?? "",
-    track: "A",
     description: item.description ?? "",
     location: (item.locationRestrictions ?? []).join(" "),
-    contractType: null,
+    contractType: item.employmentType ?? null,
     salaryMin: item.minSalary ?? null,
     salaryMax: item.maxSalary ?? null,
     salaryCurrency: item.currency ?? null,
     salaryRaw: null,
-    hardRequired: item.categories ?? [],
+    hardRequired: skillCategories(item.categories ?? []),
     hardNice: [],
     softRequired: [],
     softNice: [],
@@ -52,8 +134,9 @@ export function normalize(raw: unknown): NormalizedJob {
 
 export const himalayasAdapter: SourceAdapter = {
   source: "himalayas",
-  async fetchListings() {
-    const res = await fetch(LISTINGS_URL, {
+  capabilities: himalayasCapabilities,
+  async fetchListings(filter: SourceFilter) {
+    const res = await fetch(himalayasSearchUrl(filter), {
       headers: { "User-Agent": "job-inbox/0.1" },
     });
     if (!res.ok) {
@@ -63,4 +146,5 @@ export const himalayasAdapter: SourceAdapter = {
     return data.jobs ?? [];
   },
   normalize,
+  matchFields,
 };

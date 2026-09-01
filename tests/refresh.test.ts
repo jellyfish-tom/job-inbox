@@ -8,9 +8,11 @@ import {
   listInbox,
   updateNotes,
 } from "@/lib/db/queries";
-import { DEFAULT_FILTERS } from "@/lib/filter-defaults";
+import { DEFAULT_SOURCE_FILTERS } from "@/lib/filter-defaults";
 import { refreshSourceWith } from "@/lib/refresh";
-import type { NormalizedJob } from "@/types/job";
+import { remoteokCapabilities } from "@/lib/sources/remoteok";
+import type { SourceAdapter } from "@/lib/sources/types";
+import type { NormalizedJob, SourceFilter } from "@/types/job";
 
 process.env.TURSO_DATABASE_URL = "file:tests/tmp-refresh.test.db";
 
@@ -22,6 +24,7 @@ const migrationSql = readFileSync(
 
 const goodRaw = { id: "good" };
 const hybridRaw = { id: "hybrid" };
+const acceptAll: SourceFilter = { values: {}, exclude: [] };
 
 function goodJob(): NormalizedJob {
   return {
@@ -30,7 +33,6 @@ function goodJob(): NormalizedJob {
     url: "https://remoteok.com/remote-jobs/good",
     title: "Senior Frontend Engineer",
     company: "Acme",
-    track: "A",
     description: "React TypeScript remote CET",
     location: "",
     contractType: null,
@@ -57,6 +59,21 @@ function hybridJob(): NormalizedJob {
   };
 }
 
+function stub(partial: Partial<SourceAdapter>): SourceAdapter {
+  return {
+    source: "remoteok",
+    capabilities: remoteokCapabilities,
+    fetchListings: async () => [],
+    normalize: () => {
+      throw new Error("unused");
+    },
+    matchFields: (_raw, job) => ({
+      tags: [...job.hardRequired, ...job.hardNice],
+    }),
+    ...partial,
+  };
+}
+
 beforeEach(async () => {
   resetDbClient();
   if (existsSync(dbPath)) unlinkSync(dbPath);
@@ -69,15 +86,18 @@ afterAll(() => {
 });
 
 test("inserts matching job and counts rejected", async () => {
-  const adapter = {
-    source: "remoteok" as const,
+  const adapter = stub({
     fetchListings: async () => [goodRaw, hybridRaw],
     normalize: (raw: unknown) => {
       if ((raw as { id: string }).id === "good") return goodJob();
       return hybridJob();
     },
-  };
-  const result = await refreshSourceWith(adapter, "remoteok", DEFAULT_FILTERS);
+  });
+  const result = await refreshSourceWith(
+    adapter,
+    "remoteok",
+    DEFAULT_SOURCE_FILTERS.remoteok,
+  );
   expect(result.status).toBe("ok");
   expect(result.inserted).toBe(1);
   expect(result.rejected).toBe(1);
@@ -91,7 +111,6 @@ test("second fetch does not clobber applied notes", async () => {
     url: "https://remoteok.com/remote-jobs/applied",
     title,
     company: "Acme",
-    track: "A",
     description: "React TypeScript remote CET",
     location: "",
     contractType: null,
@@ -109,25 +128,23 @@ test("second fetch does not clobber applied notes", async () => {
     postedAt: "2026-08-28T00:00:00.000Z",
   });
 
-  const adapter = {
-    source: "remoteok" as const,
+  const adapter = stub({
     fetchListings: async () => [raw],
     normalize: () => makeJob("Senior Frontend Engineer"),
-  };
+  });
 
-  await refreshSourceWith(adapter, "remoteok", DEFAULT_FILTERS);
+  await refreshSourceWith(adapter, "remoteok", DEFAULT_SOURCE_FILTERS.remoteok);
 
   const inbox1 = await listInbox();
   expect(inbox1).toHaveLength(1);
   await applyJob(inbox1[0].id);
   await updateNotes(inbox1[0].id, "hello");
 
-  const adapter2 = {
-    source: "remoteok" as const,
+  const adapter2 = stub({
     fetchListings: async () => [raw],
     normalize: () => makeJob("New Title"),
-  };
-  await refreshSourceWith(adapter2, "remoteok", DEFAULT_FILTERS);
+  });
+  await refreshSourceWith(adapter2, "remoteok", DEFAULT_SOURCE_FILTERS.remoteok);
 
   const inbox = await listInbox();
   expect(inbox).toHaveLength(0);
@@ -137,28 +154,26 @@ test("second fetch does not clobber applied notes", async () => {
 });
 
 test("unparseable listing fails the run", async () => {
-  const adapter = {
-    source: "remoteok" as const,
+  const adapter = stub({
     fetchListings: async () => [{ nope: true }],
     normalize: () => {
       throw new Error("unparseable listing");
     },
-  };
-  const result = await refreshSourceWith(adapter, "remoteok", DEFAULT_FILTERS);
+  });
+  const result = await refreshSourceWith(
+    adapter,
+    "remoteok",
+    DEFAULT_SOURCE_FILTERS.remoteok,
+  );
   expect(result.status).toBe("failed");
   expect(result.error).toBe("unparseable listing");
 });
 
 test("custom accept-all filter keeps a job the default would reject", async () => {
-  const acceptAll = {
-    A: { requiredGroups: [], exclude: [] },
-    B: { requiredGroups: [], exclude: [] },
-  };
-  const adapter = {
-    source: "remoteok" as const,
+  const adapter = stub({
     fetchListings: async () => [hybridRaw],
     normalize: () => hybridJob(),
-  };
+  });
   const result = await refreshSourceWith(adapter, "remoteok", acceptAll);
   expect(result.status).toBe("ok");
   expect(result.inserted).toBe(1);

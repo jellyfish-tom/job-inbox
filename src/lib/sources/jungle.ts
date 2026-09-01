@@ -1,6 +1,6 @@
-import type { NormalizedJob } from "@/types/job";
+import type { NormalizedJob, SourceCapabilities, SourceFilter } from "@/types/job";
 import { requireUrl } from "@/lib/url";
-import type { SourceAdapter } from "./types";
+import { joinFilterTokens, nonempty, type SourceAdapter } from "./types";
 
 type JungleRaw = {
   id?: string;
@@ -12,94 +12,164 @@ type JungleRaw = {
   contract_type?: string;
   description?: string;
   workplace_type?: string;
+  salary_min?: number | null;
+  salary_max?: number | null;
+  salary_currency?: string | null;
+  salary_period?: string | null;
 };
 
-type JobPostingLd = {
-  "@type"?: string | string[];
-  identifier?: string | { value?: string };
-  title?: string;
-  hiringOrganization?: { name?: string };
-  url?: string;
-  datePosted?: string;
-  skills?: string | string[];
-  employmentType?: string;
-  description?: string;
-  jobLocationType?: string;
-};
-
-const LISTINGS_URL =
-  "https://www.welcometothejungle.com/en/jobs?query=frontend%20senior&refinementList%5Boffices.country_code%5D%5B%5D=remote";
-
-function isJobPosting(node: JobPostingLd): boolean {
-  const type = node["@type"];
-  if (type === "JobPosting") {
-    return true;
-  }
-  return Array.isArray(type) && type.includes("JobPosting");
-}
-
-function collectJobPostings(parsed: unknown): JobPostingLd[] {
-  const results: JobPostingLd[] = [];
-  const nodes = Array.isArray(parsed) ? parsed : [parsed];
-  for (const node of nodes) {
-    if (!node || typeof node !== "object") {
-      continue;
-    }
-    const record = node as JobPostingLd & { "@graph"?: JobPostingLd[] };
-    if (isJobPosting(record)) {
-      results.push(record);
-    }
-    if (Array.isArray(record["@graph"])) {
-      for (const child of record["@graph"]) {
-        if (isJobPosting(child)) {
-          results.push(child);
-        }
-      }
-    }
-  }
-  return results;
-}
-
-export function parseJobPostingNodes(html: string): JobPostingLd[] {
-  const results: JobPostingLd[] = [];
-  const scriptRegex =
-    /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
-  let match;
-  while ((match = scriptRegex.exec(html)) !== null) {
-    try {
-      results.push(...collectJobPostings(JSON.parse(match[1])));
-    } catch {
-      // skip invalid JSON-LD blocks
-    }
-  }
-  return results;
-}
-
-function toJungleRaw(posting: JobPostingLd): JungleRaw {
-  const identifier = posting.identifier;
-  const id =
-    typeof identifier === "string"
-      ? identifier
-      : (identifier?.value ?? posting.url ?? "");
-
-  const skills = posting.skills;
-  const skillList = Array.isArray(skills)
-    ? skills
-    : skills
-      ? [skills]
-      : [];
-
-  return {
-    id,
-    name: posting.title,
-    company: { name: posting.hiringOrganization?.name },
-    urls: { show: posting.url },
-    published_at: posting.datePosted,
-    skills: skillList,
-    contract_type: posting.employmentType,
-    description: posting.description,
-    workplace_type: posting.jobLocationType,
+type JungleHit = {
+  objectID?: string;
+  reference?: string;
+  name?: string;
+  slug?: string;
+  organization?: { name?: string; slug?: string };
+  published_at?: string;
+  remote?: string;
+  contract_type?: string;
+  summary?: string;
+  profile?: string;
+  salary_minimum?: number | null;
+  salary_maximum?: number | null;
+  salary_currency?: string | null;
+  salary_period?: string | null;
+  new_profession?: {
+    pivot_name?: string;
+    sub_category_name?: string;
   };
+};
+
+const ALGOLIA_APP_ID = "CSEKHVMS53";
+const ALGOLIA_API_KEY = "4bd8f6215d0cc52b26430765769e65a0";
+const ALGOLIA_INDEX = "wttj_jobs_production_en";
+const ALGOLIA_URL = `https://${ALGOLIA_APP_ID.toLowerCase()}-dsn.algolia.net/1/indexes/${ALGOLIA_INDEX}/query`;
+const PAGE_SIZE = 100;
+const MAX_PAGES = 3;
+
+export const jungleCapabilities: SourceCapabilities = {
+  source: "jungle",
+  fields: [
+    {
+      id: "query",
+      label: "Search",
+      kind: "fetch",
+      valueType: "tokens",
+      queryKey: "query",
+    },
+    {
+      id: "skills",
+      label: "Skills",
+      kind: "match",
+      valueType: "tokens",
+    },
+    {
+      id: "workplace_type",
+      label: "Workplace",
+      kind: "match",
+      valueType: "tokens",
+    },
+  ],
+};
+
+function wantsRemote(filter: SourceFilter): boolean {
+  return nonempty(filter.values.workplace_type).some((token) => {
+    const value = token.toLowerCase();
+    return value === "remote" || value === "telecommute" || value === "fulltime";
+  });
+}
+
+export function jungleAlgoliaBody(
+  filter: SourceFilter,
+  page: number,
+): {
+  query: string;
+  hitsPerPage: number;
+  page: number;
+  filters?: string;
+} {
+  const body: {
+    query: string;
+    hitsPerPage: number;
+    page: number;
+    filters?: string;
+  } = {
+    query: joinFilterTokens(filter.values.query),
+    hitsPerPage: PAGE_SIZE,
+    page,
+  };
+  if (wantsRemote(filter)) {
+    body.filters = "remote:fulltime";
+  }
+  return body;
+}
+
+function listingUrl(hit: JungleHit): string | undefined {
+  const org = hit.organization?.slug;
+  const slug = hit.slug;
+  if (!org || !slug) return undefined;
+  return `https://www.welcometothejungle.com/en/companies/${org}/jobs/${slug}`;
+}
+
+function professionSkills(hit: JungleHit): string[] {
+  const names = [
+    hit.new_profession?.pivot_name,
+    hit.new_profession?.sub_category_name,
+  ];
+  return names.filter((name): name is string => Boolean(name?.trim()));
+}
+
+export function toJungleRaw(hit: JungleHit): JungleRaw {
+  const description = [hit.summary, hit.profile]
+    .filter((part): part is string => Boolean(part))
+    .join("\n\n");
+  return {
+    id: hit.reference ?? hit.objectID,
+    name: hit.name,
+    company: { name: hit.organization?.name },
+    urls: { show: listingUrl(hit) },
+    published_at: hit.published_at,
+    skills: professionSkills(hit),
+    contract_type: hit.contract_type,
+    description,
+    workplace_type: hit.remote,
+    salary_min: hit.salary_minimum,
+    salary_max: hit.salary_maximum,
+    salary_currency: hit.salary_currency,
+    salary_period: hit.salary_period,
+  };
+}
+
+export function listingsFromHits(hits: JungleHit[]): JungleRaw[] {
+  const seen = new Set<string>();
+  const listings: JungleRaw[] = [];
+  for (const hit of hits) {
+    const raw = toJungleRaw(hit);
+    if (!raw.id || !raw.urls?.show || seen.has(raw.id)) continue;
+    seen.add(raw.id);
+    listings.push(raw);
+  }
+  return listings;
+}
+
+function jungleSalaryRaw(item: JungleRaw): string | null {
+  const parts: string[] = [];
+  if (item.salary_min != null && item.salary_min > 0) {
+    parts.push(String(item.salary_min));
+  }
+  if (item.salary_max != null && item.salary_max > 0) {
+    parts.push(String(item.salary_max));
+  }
+  if (parts.length === 0) return null;
+  const range = parts.join("–");
+  const currency = item.salary_currency ?? "";
+  const period = item.salary_period ? `/ ${item.salary_period}` : "";
+  return `${range} ${currency} ${period}`.replace(/\s+/g, " ").trim();
+}
+
+function displayLocation(workplace: string | undefined): string {
+  if (!workplace) return "";
+  if (workplace.toLowerCase() === "fulltime") return "remote";
+  return workplace;
 }
 
 export function normalize(raw: unknown): NormalizedJob {
@@ -115,14 +185,13 @@ export function normalize(raw: unknown): NormalizedJob {
     url: requireUrl(url),
     title: item.name,
     company: item.company?.name ?? "",
-    track: "A",
     description: item.description ?? "",
-    location: item.workplace_type ?? "",
+    location: displayLocation(item.workplace_type),
     contractType: item.contract_type ?? null,
-    salaryMin: null,
-    salaryMax: null,
-    salaryCurrency: null,
-    salaryRaw: null,
+    salaryMin: item.salary_min ?? null,
+    salaryMax: item.salary_max ?? null,
+    salaryCurrency: item.salary_currency ?? null,
+    salaryRaw: jungleSalaryRaw(item),
     hardRequired: item.skills ?? [],
     hardNice: [],
     softRequired: [],
@@ -132,20 +201,65 @@ export function normalize(raw: unknown): NormalizedJob {
   };
 }
 
+export function matchFields(
+  raw: unknown,
+  job: NormalizedJob,
+): Record<string, string[]> {
+  const item = raw as JungleRaw;
+  const workplace = item.workplace_type ? [item.workplace_type] : [];
+  const remote = item.workplace_type?.toLowerCase();
+  if (remote === "telecommute" || remote === "fulltime") {
+    workplace.push("remote");
+  }
+  const skills = item.description
+    ? [item.description]
+    : item.skills && item.skills.length > 0
+      ? item.skills
+      : job.hardRequired;
+  return {
+    skills,
+    workplace_type: workplace,
+  };
+}
+
+async function fetchPage(filter: SourceFilter, page: number): Promise<JungleHit[]> {
+  const res = await fetch(ALGOLIA_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-algolia-application-id": ALGOLIA_APP_ID,
+      "x-algolia-api-key": ALGOLIA_API_KEY,
+      Referer: "https://www.welcometothejungle.com/",
+      Origin: "https://www.welcometothejungle.com",
+      "User-Agent": "job-inbox/0.1",
+    },
+    body: JSON.stringify(jungleAlgoliaBody(filter, page)),
+  });
+  if (!res.ok) {
+    throw new Error(`jungle fetch failed: ${res.status}`);
+  }
+  const data = (await res.json()) as { hits?: unknown };
+  return Array.isArray(data.hits) ? (data.hits as JungleHit[]) : [];
+}
+
 export const jungle: SourceAdapter = {
   source: "jungle",
-  async fetchListings() {
-    const res = await fetch(LISTINGS_URL, {
-      headers: { "User-Agent": "job-inbox/0.1" },
-    });
-    if (!res.ok) {
-      throw new Error(`jungle fetch failed: ${res.status}`);
+  capabilities: jungleCapabilities,
+  async fetchListings(filter: SourceFilter) {
+    const listings: JungleRaw[] = [];
+    const seen = new Set<string>();
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const hits = await fetchPage(filter, page);
+      if (hits.length === 0) break;
+      for (const raw of listingsFromHits(hits)) {
+        if (!raw.id || seen.has(raw.id)) continue;
+        seen.add(raw.id);
+        listings.push(raw);
+      }
+      if (hits.length < PAGE_SIZE) break;
     }
-    const postings = parseJobPostingNodes(await res.text());
-    if (postings.length === 0) {
-      throw new Error("unparseable listing");
-    }
-    return postings.map(toJungleRaw);
+    return listings;
   },
   normalize,
+  matchFields,
 };

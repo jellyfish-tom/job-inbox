@@ -63,6 +63,33 @@ body {
 
 .refresh-banner {
   margin-bottom: 1rem;
+  border: 0;
+  background: transparent;
+}
+
+.refresh-banner .pr-collapse__item {
+  border-bottom: 0;
+}
+
+.refresh-banner .pr-collapse__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.35rem;
+  width: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.refresh-banner .pr-collapse__panel,
+.refresh-banner .pr-collapse__panel[data-state="open"] {
+  margin-top: 0.5rem;
+  padding: 0;
 }
 
 .refresh-list {
@@ -75,10 +102,19 @@ body {
 }
 
 .refresh-row {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns:
+    6rem
+    3.75rem
+    minmax(8.5rem, 11rem)
+    5.5rem
+    4.25rem
+    6.25rem
+    5.5rem
+    minmax(4.75rem, 1fr);
   align-items: center;
-  gap: 0.5rem 1rem;
+  column-gap: 0.5rem;
+  row-gap: 0.35rem;
   padding: 0.5rem 0.75rem;
   background: #fff;
   border: 1px solid #e5e5e5;
@@ -88,11 +124,45 @@ body {
 
 .refresh-source {
   font-weight: 600;
-  min-width: 5rem;
+}
+
+.refresh-row > .pr-badge {
+  justify-self: start;
+  width: max-content;
+}
+
+.refresh-row time {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.refresh-time-placeholder {
+  min-height: 1em;
+}
+
+.refresh-stat {
+  color: #525252;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.refresh-stat-n {
+  display: inline-block;
+  min-width: 3ch;
+  text-align: right;
+}
+
+.refresh-actions {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .refresh-error {
-  flex-basis: 100%;
+  grid-column: 1 / -1;
   color: #b91c1c;
   font-size: 0.8125rem;
 }
@@ -119,11 +189,27 @@ body {
   font-weight: 400;
 }
 
+.job-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .job-meta {
   display: block;
   margin-top: 0.25rem;
   font-size: 0.875rem;
   color: #666;
+}
+
+.job-salary {
+  flex-shrink: 0;
+  font-weight: 400;
+  font-size: 0.875rem;
+  color: #666;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .job-details {

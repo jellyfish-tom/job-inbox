@@ -1,3 +1,4 @@
+import { Section } from "@proteus-ui/core";
 import { InboxFilter } from "@/components/InboxFilter";
 import { RefreshBanner } from "@/components/RefreshBanner";
 import { pinnedSearches } from "@/config/pinned-searches";
@@ -32,11 +33,13 @@ export default async function Home() {
         <RefreshBanner runs={runs} />
       </header>
 
-      {jobs.length === 0 ? (
-        <p className="empty-state">No jobs in inbox.</p>
-      ) : (
-        <InboxFilter jobs={jobs} />
-      )}
+      <Section title="Offers">
+        {jobs.length === 0 ? (
+          <p className="empty-state">No jobs in inbox.</p>
+        ) : (
+          <InboxFilter jobs={jobs} />
+        )}
+      </Section>
     </main>
   );
 }

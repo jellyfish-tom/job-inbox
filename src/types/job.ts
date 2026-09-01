@@ -9,7 +9,6 @@ export const SOURCE_IDS = [
 
 export type SourceId = (typeof SOURCE_IDS)[number];
 
-export type Track = "A" | "B";
 export type JobStatus = "new" | "applied" | "rejected";
 
 export type NormalizedJob = {
@@ -18,7 +17,6 @@ export type NormalizedJob = {
   url: string;
   title: string;
   company: string;
-  track: Track;
   description: string;
   location: string;
   contractType: string | null;
@@ -34,23 +32,30 @@ export type NormalizedJob = {
   postedAt: string | null;
 };
 
-export type FilterInput = {
-  title: string;
-  company: string;
-  description: string;
-  location: string;
-  tags: string[];
-  track: Track;
-  contractType: string | null;
-  timezone: string | null;
-};
+export type FieldKind = "fetch" | "match" | "both";
 
-export type KeywordGroup = {
+export type SourceField = {
+  id: string;
   label: string;
-  keywords: string[];
+  kind: FieldKind;
+  valueType: "tokens" | "enum";
+  enumValues?: string[];
+  queryKey?: string;
 };
 
-export type TrackFilter = {
-  requiredGroups: KeywordGroup[];
+export type SourceCapabilities = {
+  source: SourceId;
+  fields: SourceField[];
+};
+
+export type SourceFilter = {
+  values: Record<string, string[]>;
   exclude: string[];
+};
+
+export type MatchInput = {
+  title: string;
+  description: string;
+  tags: string[];
+  fields: Record<string, string[]>;
 };

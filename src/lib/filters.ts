@@ -1,33 +1,52 @@
-import type { FilterInput, TrackFilter } from "@/types/job";
+import type { MatchInput, SourceCapabilities, SourceFilter } from "@/types/job";
 
-function haystack(input: FilterInput): string {
-  return [
-    input.title,
-    input.company,
-    input.description,
-    input.location,
-    input.tags.join(" "),
-    input.contractType ?? "",
-    input.timezone ?? "",
-  ]
-    .join(" ")
-    .toLowerCase();
+const SENTINELS = new Set(["any"]);
+
+function isAbsentOrAny(values: string[]): boolean {
+  if (values.length === 0) return true;
+  return values.every((v) => SENTINELS.has(v.trim().toLowerCase()));
 }
 
-export function isInstantReject(
-  input: FilterInput,
-  filter: TrackFilter,
-): boolean {
-  const h = haystack(input);
-  return filter.exclude.some((k) => k !== "" && h.includes(k.toLowerCase()));
+function excludeHaystack(input: MatchInput): string {
+  return [input.title, input.description, ...input.tags].join(" ").toLowerCase();
 }
 
-export function matchesCriteria(
-  input: FilterInput,
-  filter: TrackFilter,
+export function isExcluded(input: MatchInput, exclude: string[]): boolean {
+  const h = excludeHaystack(input);
+  return exclude.some((k) => k !== "" && h.includes(k.toLowerCase()));
+}
+
+export function fieldMatches(
+  listing: string[],
+  required: string[],
 ): boolean {
-  const h = haystack(input);
-  return filter.requiredGroups.every((group) =>
-    group.keywords.some((k) => k !== "" && h.includes(k.toLowerCase())),
+  if (required.length === 0) return true;
+  if (isAbsentOrAny(listing)) return true;
+  return required.some((token) =>
+    listing.some((value) =>
+      value.toLowerCase().includes(token.toLowerCase()),
+    ),
   );
+}
+
+export function matchesSource(
+  input: MatchInput,
+  filter: SourceFilter,
+  capabilities: SourceCapabilities,
+): boolean {
+  if (isExcluded(input, filter.exclude)) return false;
+  return capabilities.fields
+    .filter((field) => field.kind !== "fetch")
+    .every((field) =>
+      fieldMatches(input.fields[field.id] ?? [], filter.values[field.id] ?? []),
+    );
+}
+
+export function toMatchInput(
+  title: string,
+  description: string,
+  tags: string[],
+  fields: Record<string, string[]>,
+): MatchInput {
+  return { title, description, tags, fields };
 }

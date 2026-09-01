@@ -1,22 +1,26 @@
 import { expect, test } from "vitest";
-import { sanitizeTrackFilter } from "@/lib/filter-defaults";
-import type { TrackFilter } from "@/types/job";
+import { sanitizeSourceFilter } from "@/lib/filter-defaults";
 
-test("save path sanitizes: empty group removed, blanks trimmed", () => {
-  const input: TrackFilter = {
-    requiredGroups: [
-      { label: "Stack", keywords: ["React", " ", ""] },
-      { label: "Blank", keywords: [""] },
-    ],
-    exclude: [" hybrid ", ""],
-  };
-  expect(sanitizeTrackFilter(input)).toEqual({
-    requiredGroups: [{ label: "Stack", keywords: ["React"] }],
+test("save path sanitizes: unknown ids dropped, blanks trimmed", () => {
+  expect(
+    sanitizeSourceFilter(
+      {
+        values: {
+          skills: ["React", " ", ""],
+          nope: ["x"],
+        },
+        exclude: [" hybrid ", ""],
+      },
+      ["skills"],
+    ),
+  ).toEqual({
+    values: { skills: ["React"] },
     exclude: ["hybrid"],
   });
 });
 
-test("removing all groups yields accept-all config", () => {
-  const input: TrackFilter = { requiredGroups: [], exclude: [] };
-  expect(sanitizeTrackFilter(input)).toEqual({ requiredGroups: [], exclude: [] });
+test("empty values yield accept-all field constraints", () => {
+  expect(
+    sanitizeSourceFilter({ values: {}, exclude: [] }, ["skills"]),
+  ).toEqual({ values: {}, exclude: [] });
 });

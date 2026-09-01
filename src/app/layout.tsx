@@ -18,8 +18,8 @@ export default async function RootLayout({
   const loggedIn = Boolean(token && (await verifySession(token)));
 
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" suppressHydrationWarning>
+      <body suppressHydrationWarning>
         {loggedIn ? (
           <nav className="site-nav">
             <Link href="/">Inbox</Link>

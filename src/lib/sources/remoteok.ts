@@ -1,6 +1,19 @@
-import type { NormalizedJob } from "@/types/job";
+import type { NormalizedJob, SourceCapabilities, SourceFilter } from "@/types/job";
 import { requireUrl } from "@/lib/url";
-import type { SourceAdapter } from "./types";
+import { nonempty, type SourceAdapter } from "./types";
+
+export const remoteokCapabilities: SourceCapabilities = {
+  source: "remoteok",
+  fields: [
+    {
+      id: "tags",
+      label: "Tags",
+      kind: "both",
+      valueType: "tokens",
+      queryKey: "tags",
+    },
+  ],
+};
 
 type RemoteokRaw = {
   id?: string | number;
@@ -17,6 +30,15 @@ type RemoteokRaw = {
 
 const LISTINGS_URL = "https://remoteok.com/api";
 
+export function remoteokApiUrl(filter: SourceFilter): string {
+  const url = new URL(LISTINGS_URL);
+  const tags = nonempty(filter.values.tags);
+  if (tags.length) {
+    url.searchParams.set("tags", tags.join(","));
+  }
+  return url.toString();
+}
+
 export function normalize(raw: unknown): NormalizedJob {
   const item = raw as RemoteokRaw;
   if (!item.id || !item.position) {
@@ -28,8 +50,14 @@ export function normalize(raw: unknown): NormalizedJob {
     throw new Error("unparseable listing");
   }
 
-  const salaryRaw =
-    item.salary_min != null ? `${item.salary_min}–${item.salary_max}` : null;
+  const salaryParts: string[] = [];
+  if (item.salary_min != null && item.salary_min > 0) {
+    salaryParts.push(String(item.salary_min));
+  }
+  if (item.salary_max != null && item.salary_max > 0) {
+    salaryParts.push(String(item.salary_max));
+  }
+  const salaryRaw = salaryParts.length > 0 ? salaryParts.join("–") : null;
 
   return {
     source: "remoteok",
@@ -37,7 +65,6 @@ export function normalize(raw: unknown): NormalizedJob {
     url: requireUrl(url),
     title: item.position,
     company: item.company ?? "",
-    track: "A",
     description: item.description ?? "",
     location: item.location ?? "",
     contractType: null,
@@ -54,10 +81,19 @@ export function normalize(raw: unknown): NormalizedJob {
   };
 }
 
+export function matchFields(
+  raw: unknown,
+  job: NormalizedJob,
+): Record<string, string[]> {
+  const item = raw as RemoteokRaw;
+  return { tags: item.tags ?? job.hardRequired };
+}
+
 export const remoteokAdapter: SourceAdapter = {
   source: "remoteok",
-  async fetchListings() {
-    const res = await fetch(LISTINGS_URL, {
+  capabilities: remoteokCapabilities,
+  async fetchListings(filter: SourceFilter) {
+    const res = await fetch(remoteokApiUrl(filter), {
       headers: { "User-Agent": "job-inbox/0.1" },
     });
     if (!res.ok) {
@@ -67,4 +103,5 @@ export const remoteokAdapter: SourceAdapter = {
     return data.slice(1);
   },
   normalize,
+  matchFields,
 };

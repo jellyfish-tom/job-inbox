@@ -1,19 +1,21 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { resetFilterConfig, saveFilterConfig } from "@/lib/db/queries";
-import { sanitizeTrackFilter } from "@/lib/filter-defaults";
-import type { Track, TrackFilter } from "@/types/job";
+import { resetSourceFilter, saveSourceFilter } from "@/lib/db/queries";
+import { sanitizeSourceFilter } from "@/lib/filter-defaults";
+import { getAdapter } from "@/lib/sources/registry";
+import type { SourceFilter, SourceId } from "@/types/job";
 
 export async function saveFiltersAction(
-  track: Track,
-  config: TrackFilter,
+  source: SourceId,
+  config: SourceFilter,
 ): Promise<void> {
-  await saveFilterConfig(track, sanitizeTrackFilter(config));
+  const allowed = getAdapter(source).capabilities.fields.map((f) => f.id);
+  await saveSourceFilter(source, sanitizeSourceFilter(config, allowed));
   revalidatePath("/filters");
 }
 
-export async function resetFiltersAction(track: Track): Promise<void> {
-  await resetFilterConfig(track);
+export async function resetFiltersAction(source: SourceId): Promise<void> {
+  await resetSourceFilter(source);
   revalidatePath("/filters");
 }

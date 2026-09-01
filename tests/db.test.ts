@@ -6,6 +6,7 @@ import {
   applyJob,
   createRefreshRun,
   finishRefreshRun,
+  findJobForUpsert,
   getJobBySourceExternalId,
   getWatermark,
   updateNotes,
@@ -28,7 +29,6 @@ function sampleJob(overrides: Partial<NormalizedJob> = {}): NormalizedJob {
     url: "https://remoteok.com/remote-jobs/123",
     title: "Engineer",
     company: "Acme",
-    track: "A",
     description: "",
     location: "",
     contractType: null,
@@ -107,6 +107,40 @@ test("applyJob sets status applied, appliedAt, and applied event", async () => {
   const applied = events.rows.find((e) => e.type === "applied");
   expect(applied).toBeTruthy();
   expect(applied?.actor).toBe("user");
+});
+
+test("findJobForUpsert remaps a city-id nofluff row onto reference", async () => {
+  const { id } = await upsertJob(
+    sampleJob({
+      source: "nofluff",
+      externalId: "vidoc-warszawa",
+      url: "https://nofluffjobs.com/job/vidoc-warszawa",
+      title: "Founding Engineer",
+      company: "Vidoc",
+      rawJson: JSON.stringify({
+        id: "vidoc-warszawa",
+        reference: "LZGAZZ3V",
+      }),
+    }),
+    null,
+  );
+
+  const incoming = sampleJob({
+    source: "nofluff",
+    externalId: "LZGAZZ3V",
+    url: "https://nofluffjobs.com/job/vidoc-remote",
+    title: "Founding Engineer",
+    company: "Vidoc",
+  });
+  const existing = await findJobForUpsert(incoming, ["vidoc-Remote", "LZGAZZ3V"]);
+  expect(existing?.id).toBe(id);
+
+  const result = await upsertJob(incoming, existing);
+  expect(result.outcome).toBe("updated");
+  expect(await getJobBySourceExternalId("nofluff", "vidoc-warszawa")).toBeNull();
+  const row = await getJobBySourceExternalId("nofluff", "LZGAZZ3V");
+  expect(row?.id).toBe(id);
+  expect(row?.url).toContain("vidoc-remote");
 });
 
 test("second job with same normalized url is deduped", async () => {

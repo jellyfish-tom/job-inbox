@@ -1,16 +1,17 @@
 import { errorMessage } from "@/lib/errors";
-import { isInstantReject, matchesCriteria } from "@/lib/filters";
+import { matchesSource, toMatchInput } from "@/lib/filters";
 import {
+  countJobsForSource,
   createRefreshRun,
   finishRefreshRun,
-  getAllFilterConfigs,
-  getJobBySourceExternalId,
+  findJobForUpsert,
+  getSourceFilter,
   getWatermark,
   upsertJob,
 } from "@/lib/db/queries";
 import { getAdapter } from "@/lib/sources/registry";
 import type { SourceAdapter } from "@/lib/sources/types";
-import type { FilterInput, NormalizedJob, SourceId, Track, TrackFilter } from "@/types/job";
+import type { NormalizedJob, SourceFilter, SourceId } from "@/types/job";
 
 export type RefreshResult = {
   source: SourceId;
@@ -23,24 +24,6 @@ export type RefreshResult = {
   error: string;
 };
 
-function buildFilterInput(job: NormalizedJob): FilterInput {
-  return {
-    title: job.title,
-    company: job.company,
-    description: job.description,
-    location: job.location,
-    tags: [
-      ...job.hardRequired,
-      ...job.hardNice,
-      ...job.softRequired,
-      ...job.softNice,
-    ],
-    track: job.track,
-    contractType: job.contractType,
-    timezone: null,
-  };
-}
-
 function isOlderThanWatermark(
   postedAt: string | null,
   watermark: string | null,
@@ -52,9 +35,10 @@ function isOlderThanWatermark(
 export async function refreshSourceWith(
   adapter: SourceAdapter,
   source: SourceId,
-  filters: Record<Track, TrackFilter>,
+  filter: SourceFilter,
 ): Promise<RefreshResult> {
   const watermark = await getWatermark(source);
+  const knownCount = await countJobsForSource(source);
   const runId = await createRefreshRun(source, watermark);
 
   let fetched = 0;
@@ -79,7 +63,7 @@ export async function refreshSourceWith(
   };
 
   try {
-    const raws = await adapter.fetchListings();
+    const raws = await adapter.fetchListings(filter);
 
     for (const raw of raws) {
       fetched++;
@@ -91,20 +75,29 @@ export async function refreshSourceWith(
         return finish("failed", errorMessage(err));
       }
 
-      const existing = await getJobBySourceExternalId(job.source, job.externalId);
+      const rawIds = raw as { id?: string; reference?: string };
+      const existing = await findJobForUpsert(
+        job,
+        [rawIds.id, rawIds.reference].filter((value): value is string =>
+          Boolean(value),
+        ),
+      );
 
       if (!existing) {
-        const filterInput = buildFilterInput(job);
-        const filter = filters[job.track];
-        if (
-          isInstantReject(filterInput, filter) ||
-          !matchesCriteria(filterInput, filter)
-        ) {
+        const matchInput = toMatchInput(
+          job.title,
+          job.description,
+          [...job.hardRequired, ...job.hardNice],
+          adapter.matchFields(raw, job),
+        );
+        if (!matchesSource(matchInput, filter, adapter.capabilities)) {
           rejected++;
           continue;
         }
-
-        if (isOlderThanWatermark(job.postedAt, watermark)) {
+        if (
+          knownCount > 0 &&
+          isOlderThanWatermark(job.postedAt, watermark)
+        ) {
           skipped++;
           continue;
         }
@@ -125,6 +118,6 @@ export async function refreshSourceWith(
 }
 
 export async function refreshSource(source: SourceId): Promise<RefreshResult> {
-  const filters = await getAllFilterConfigs();
-  return refreshSourceWith(getAdapter(source), source, filters);
+  const filter = await getSourceFilter(source);
+  return refreshSourceWith(getAdapter(source), source, filter);
 }

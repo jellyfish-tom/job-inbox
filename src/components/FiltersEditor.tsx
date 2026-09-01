@@ -1,107 +1,135 @@
 "use client";
 
-import { Badge, Button, Section, Spinner, Textarea, TextInput } from "@proteus-ui/core";
+import {
+  Badge,
+  Button,
+  Checkbox,
+  CollapsibleSection,
+  Spinner,
+  Textarea,
+  TextInput,
+} from "@proteus-ui/core";
 import { useState, useTransition } from "react";
 import { resetFiltersAction, saveFiltersAction } from "@/app/actions/filters";
-import { DEFAULT_FILTERS } from "@/lib/filter-defaults";
-import type { Track, TrackFilter } from "@/types/job";
+import { DEFAULT_SOURCE_FILTERS } from "@/lib/filter-defaults";
+import type { SourceCapabilities, SourceField, SourceFilter, SourceId } from "@/types/job";
 
-type EditorGroup = { id: string; label: string; keywords: string[] };
-
-function toEditorGroups(groups: TrackFilter["requiredGroups"]): EditorGroup[] {
-  return groups.map((g) => ({ id: crypto.randomUUID(), ...g }));
+function fieldHint(kind: SourceField["kind"]): string {
+  if (kind === "fetch") return "sent to API";
+  if (kind === "match") return "checked after fetch";
+  return "API and match";
 }
 
 export function FiltersEditor({
-  track,
+  source,
+  capabilities,
   initial,
 }: {
-  track: Track;
-  initial: TrackFilter;
+  source: SourceId;
+  capabilities: SourceCapabilities;
+  initial: SourceFilter;
 }) {
-  const [groups, setGroups] = useState<EditorGroup[]>(() =>
-    toEditorGroups(initial.requiredGroups),
-  );
+  const [values, setValues] = useState<Record<string, string[]>>(() => ({
+    ...initial.values,
+  }));
   const [exclude, setExclude] = useState<string[]>(initial.exclude);
   const [status, setStatus] = useState<"idle" | "saved" | "error">("idle");
   const [pending, startTransition] = useTransition();
 
-  function updateGroupLabel(id: string, label: string) {
+  function setField(id: string, tokens: string[]) {
     setStatus("idle");
-    setGroups((gs) => gs.map((g) => (g.id === id ? { ...g, label } : g)));
+    setValues((current) => ({ ...current, [id]: tokens }));
   }
 
-  function updateGroupKeywords(id: string, text: string) {
-    setStatus("idle");
-    const keywords = text.split(/[,\n]+/).map((k) => k.trim());
-    setGroups((gs) => gs.map((g) => (g.id === id ? { ...g, keywords } : g)));
+  function buildFilter(): SourceFilter {
+    return { values, exclude };
   }
 
-  function addGroup() {
-    setStatus("idle");
-    setGroups((gs) => [
-      ...gs,
-      { id: crypto.randomUUID(), label: "New group", keywords: [] },
-    ]);
+  function applyDefaults() {
+    const defaults = DEFAULT_SOURCE_FILTERS[source];
+    setValues({ ...defaults.values });
+    setExclude(defaults.exclude);
   }
 
-  function removeGroup(id: string) {
-    setStatus("idle");
-    setGroups((gs) => gs.filter((g) => g.id !== id));
-  }
-
-  function updateExclude(text: string) {
-    setStatus("idle");
-    setExclude(text.split(/[,\n]+/).map((k) => k.trim()));
-  }
-
-  function buildTrackFilter(): TrackFilter {
-    return {
-      requiredGroups: groups.map(({ label, keywords }) => ({ label, keywords })),
-      exclude,
-    };
-  }
-
-  return (
-    <Section className="filters-track" title={`Track ${track}`}>
+  const body = (
+    <>
       <p className="filters-hint">
-        A job is kept when it matches at least one keyword in every group and no
-        exclude keyword. Keywords are comma- or newline-separated, case-insensitive.
+        Fetch fields go to the board. Match fields keep a listing when a
+        configured token hits that field. Empty field = no constraint. Missing
+        or “any” values pass. Exclude is title, description, and tags only.
       </p>
 
-      {groups.map((group, index) => (
-        <div key={group.id} className="filters-group">
-          <TextInput
-            aria-label={`Track ${track} group ${index + 1} label`}
-            value={group.label}
-            onValueChange={(label) => updateGroupLabel(group.id, label)}
-          />
-          <Textarea
-            aria-label={`Track ${track} group ${index + 1} keywords`}
-            value={group.keywords.join(", ")}
-            onValueChange={(text) => updateGroupKeywords(group.id, text)}
-          />
-          <Button
-            type="button"
-            intent="danger"
-            size="sm"
-            onClick={() => removeGroup(group.id)}
-          >
-            Remove group
-          </Button>
-        </div>
-      ))}
+      {capabilities.fields.map((field) => {
+        const tokens = values[field.id] ?? [];
+        if (field.valueType === "enum" && field.enumValues) {
+          return (
+            <div key={field.id} className="filters-group">
+              <span>
+                {field.label}{" "}
+                <span className="filters-hint">({fieldHint(field.kind)})</span>
+              </span>
+              <div className="inbox-filter-toggles">
+                {field.enumValues.map((option) => (
+                  <Checkbox
+                    key={option}
+                    checked={tokens.includes(option)}
+                    onCheckedChange={() =>
+                      setField(
+                        field.id,
+                        tokens.includes(option)
+                          ? tokens.filter((t) => t !== option)
+                          : [...tokens, option],
+                      )
+                    }
+                    label={option}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        }
 
-      <Button type="button" onClick={addGroup}>
-        Add group
-      </Button>
+        const isSingleLine = field.kind === "fetch" && field.valueType === "tokens";
+        const joined = tokens.join(isSingleLine ? " " : ", ");
+        return (
+          <div key={field.id} className="filters-group">
+            <span>
+              {field.label}{" "}
+              <span className="filters-hint">({fieldHint(field.kind)})</span>
+            </span>
+            {isSingleLine ? (
+              <TextInput
+                aria-label={`${source} ${field.label}`}
+                value={joined}
+                onValueChange={(text) =>
+                  setField(field.id, text === "" ? [] : [text])
+                }
+              />
+            ) : (
+              <Textarea
+                aria-label={`${source} ${field.label}`}
+                value={tokens.join(", ")}
+                onValueChange={(text) =>
+                  setField(
+                    field.id,
+                    text.split(/[,\n]+/).map((k) => k.trim()),
+                  )
+                }
+              />
+            )}
+          </div>
+        );
+      })}
 
       <label className="filters-exclude">
         Exclude
         <Textarea
-          aria-label={`Track ${track} exclude`}
+          aria-label={`${source} exclude`}
           value={exclude.join(", ")}
-          onValueChange={updateExclude}
+          onValueChange={(text) => {
+            setStatus("idle");
+            setExclude(text.split(/[,\n]+/).map((k) => k.trim()));
+          }}
         />
       </label>
 
@@ -112,7 +140,7 @@ export function FiltersEditor({
           disabled={pending}
           onClick={() =>
             startTransition(() => {
-              saveFiltersAction(track, buildTrackFilter())
+              saveFiltersAction(source, buildFilter())
                 .then(() => setStatus("saved"))
                 .catch(() => setStatus("error"));
             })
@@ -124,11 +152,9 @@ export function FiltersEditor({
           type="button"
           disabled={pending}
           onClick={() => {
-            const defaults = DEFAULT_FILTERS[track];
-            setGroups(toEditorGroups(defaults.requiredGroups));
-            setExclude(defaults.exclude);
+            applyDefaults();
             startTransition(() => {
-              resetFiltersAction(track)
+              resetFiltersAction(source)
                 .then(() => setStatus("saved"))
                 .catch(() => setStatus("error"));
             });
@@ -148,6 +174,15 @@ export function FiltersEditor({
           </Badge>
         )}
       </div>
-    </Section>
+    </>
+  );
+
+  return (
+    <CollapsibleSection
+      classNames={{ root: "filters-track" }}
+      items={[
+        { id: source, title: source, defaultOpen: false, children: body },
+      ]}
+    />
   );
 }
