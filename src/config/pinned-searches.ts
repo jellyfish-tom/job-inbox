@@ -20,4 +20,9 @@ export const pinnedSearches = [
     label: "Wellfound",
     href: "https://wellfound.com/role/l/frontend-engineer/remote",
   },
+  {
+    id: "rwfa",
+    label: "Work From Anywhere",
+    href: "https://www.realworkfromanywhere.com/",
+  },
 ] as const;

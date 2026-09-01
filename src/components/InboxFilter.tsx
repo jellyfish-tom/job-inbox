@@ -9,7 +9,7 @@ import { SOURCE_IDS, type SourceId } from "@/types/job";
 
 export function InboxFilter({ jobs }: { jobs: JobRow[] }) {
   const [text, setText] = useState("");
-  const [sources, setSources] = useState<SourceId[]>([]);
+  const [sources, setSources] = useState<SourceId[]>(() => [...SOURCE_IDS]);
 
   const filtered = useMemo(
     () => filterJobs(jobs, { text, sources }),
@@ -25,12 +25,6 @@ export function InboxFilter({ jobs }: { jobs: JobRow[] }) {
     return counts;
   }, [jobs]);
 
-  function toggle<T>(list: T[], value: T): T[] {
-    return list.includes(value)
-      ? list.filter((v) => v !== value)
-      : [...list, value];
-  }
-
   return (
     <>
       <div className="inbox-filter">
@@ -45,7 +39,15 @@ export function InboxFilter({ jobs }: { jobs: JobRow[] }) {
             <Checkbox
               key={source}
               checked={sources.includes(source)}
-              onCheckedChange={() => setSources((s) => toggle(s, source))}
+              onCheckedChange={(on) =>
+                setSources((s) =>
+                  on
+                    ? s.includes(source)
+                      ? s
+                      : [...s, source]
+                    : s.filter((v) => v !== source),
+                )
+              }
               label={`${source} (${sourceCounts[source]})`}
             />
           ))}

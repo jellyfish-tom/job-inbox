@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import type { JobRow } from "@/lib/db/queries";
 import { filterJobs } from "@/lib/inbox-filter";
+import { SOURCE_IDS } from "@/types/job";
 
 function row(overrides: Partial<JobRow>): JobRow {
   return {
@@ -40,14 +41,20 @@ const jobs: JobRow[] = [
   row({ id: "3", source: "wwr", title: "Staff Frontend", company: "Globex" }),
 ];
 
-test("empty query returns all", () => {
-  expect(filterJobs(jobs, { text: "", sources: [] })).toHaveLength(3);
+test("all sources returns all", () => {
+  expect(filterJobs(jobs, { text: "", sources: [...SOURCE_IDS] })).toHaveLength(3);
+});
+
+test("no sources returns none", () => {
+  expect(filterJobs(jobs, { text: "", sources: [] })).toEqual([]);
+  expect(filterJobs(jobs, { text: "react", sources: [] })).toEqual([]);
 });
 
 test("text matches title, company, and tags", () => {
-  expect(filterJobs(jobs, { text: "react", sources: [] }).map((j) => j.id)).toEqual(["1"]);
-  expect(filterJobs(jobs, { text: "globex", sources: [] }).map((j) => j.id)).toEqual(["3"]);
-  expect(filterJobs(jobs, { text: "vue", sources: [] }).map((j) => j.id)).toEqual(["2"]);
+  const sources = [...SOURCE_IDS];
+  expect(filterJobs(jobs, { text: "react", sources }).map((j) => j.id)).toEqual(["1"]);
+  expect(filterJobs(jobs, { text: "globex", sources }).map((j) => j.id)).toEqual(["3"]);
+  expect(filterJobs(jobs, { text: "vue", sources }).map((j) => j.id)).toEqual(["2"]);
 });
 
 test("source filter narrows the list", () => {
