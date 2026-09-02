@@ -200,10 +200,7 @@ test("jungle maps algolia hit to listing url", () => {
   );
   expect(job.company).toBe("Acme");
   expect(job.location).toBe("remote");
-  expect(job.hardRequired).toEqual([
-    "Front-End Developer",
-    "Software & Web Development",
-  ]);
+  expect(job.hardRequired).toEqual([]);
   expect(job.salaryRaw).toBe("120000–160000 USD / yearly");
   expect(matchJungle(raw, job)).toEqual({
     skills: ["React TypeScript\n\nNeed React"],

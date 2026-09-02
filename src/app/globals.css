@@ -395,6 +395,21 @@ body {
   border-top-color: #fff;
 }
 
+.pr-dialog-overlay {
+  z-index: 60;
+}
+
+.confirm-dialog-overlay,
+.confirm-dialog-overlay[data-state="open"] {
+  opacity: 1;
+}
+
+.confirm-dialog-panel,
+.confirm-dialog-panel[data-state="open"] {
+  opacity: 1;
+  transform: none;
+}
+
 .toasts {
   position: fixed;
   top: 1rem;

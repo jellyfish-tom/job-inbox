@@ -1,8 +1,9 @@
 "use client";
 
-import { Button, Card, Spinner } from "@proteus-ui/core";
+import { Button, Card, Spinner, useConfirmation } from "@proteus-ui/core";
 import { applyJobAction, rejectJobAction } from "@/app/actions/jobs";
 import { ApplyButton } from "@/components/ApplyButton";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useOfferExit } from "@/hooks/use-offer-exit";
 import type { JobRow } from "@/lib/db/queries";
 import { formatSalary } from "@/lib/salary";
@@ -50,6 +51,7 @@ function RequiredSkills({ skills }: { skills: string[] }) {
 export function InboxRow({ job }: { job: JobRow }) {
   const salary = formatSalary(job);
   const { phase, which, minWidth, run } = useOfferExit();
+  const confirm = useConfirmation();
   const busy = phase !== "idle";
   const hasSkills =
     job.hardRequired.length > 0 ||
@@ -100,13 +102,17 @@ export function InboxRow({ job }: { job: JobRow }) {
             disabled={busy}
             style={which === "reject" && minWidth != null ? { minWidth } : undefined}
             onClick={(event) => {
-              void run(
-                "reject",
-                event.currentTarget,
-                () => rejectJobAction(job.id),
-                `Rejected ${job.title}`,
-                `Could not reject ${job.title}`,
-              );
+              const button = event.currentTarget;
+              void confirm.ask().then((ok) => {
+                if (!ok) return;
+                void run(
+                  "reject",
+                  button,
+                  () => rejectJobAction(job.id),
+                  `Rejected ${job.title}`,
+                  `Could not reject ${job.title}`,
+                );
+              });
             }}
           >
             {which === "reject" ? <Spinner size="sm" /> : "Reject"}
@@ -123,6 +129,15 @@ export function InboxRow({ job }: { job: JobRow }) {
         </div>
       ) : null}
         </Card>
+        <ConfirmDialog
+          open={confirm.open}
+          title="Reject this offer?"
+          confirmLabel="Reject"
+          onConfirm={confirm.confirm}
+          onCancel={confirm.cancel}
+        >
+          {job.title}
+        </ConfirmDialog>
       </div>
     </li>
   );

@@ -1,8 +1,9 @@
 "use client";
 
-import { Card, IconButton, Spinner, Textarea } from "@proteus-ui/core";
+import { Card, IconButton, Spinner, Textarea, useConfirmation } from "@proteus-ui/core";
 import { useEffect, useRef, useState } from "react";
 import { rejectJobAction, saveNotesAction } from "@/app/actions/jobs";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useOfferExit } from "@/hooks/use-offer-exit";
 import type { JobRow } from "@/lib/db/queries";
 
@@ -48,6 +49,7 @@ export function AppliedRow({ job }: { job: JobRow }) {
   }, [job.id]);
 
   const { phase, which, minWidth, run } = useOfferExit();
+  const confirm = useConfirmation();
   const busy = phase !== "idle";
   const [notesOpen, setNotesOpen] = useState(job.notes.trim().length > 0);
 
@@ -94,13 +96,17 @@ export function AppliedRow({ job }: { job: JobRow }) {
                     : undefined
                 }
                 onClick={(event) => {
-                  void run(
-                    "delete",
-                    event.currentTarget,
-                    () => rejectJobAction(job.id),
-                    `Removed ${job.title}`,
-                    `Could not remove ${job.title}`,
-                  );
+                  const button = event.currentTarget;
+                  void confirm.ask().then((ok) => {
+                    if (!ok) return;
+                    void run(
+                      "delete",
+                      button,
+                      () => rejectJobAction(job.id),
+                      `Removed ${job.title}`,
+                      `Could not remove ${job.title}`,
+                    );
+                  });
                 }}
               />
             </div>
@@ -120,6 +126,15 @@ export function AppliedRow({ job }: { job: JobRow }) {
             />
           </details>
         </Card>
+        <ConfirmDialog
+          open={confirm.open}
+          title="Remove this application?"
+          confirmLabel="Remove"
+          onConfirm={confirm.confirm}
+          onCancel={confirm.cancel}
+        >
+          {job.title}
+        </ConfirmDialog>
       </div>
     </li>
   );

@@ -110,14 +110,6 @@ function listingUrl(hit: JungleHit): string | undefined {
   return `https://www.welcometothejungle.com/en/companies/${org}/jobs/${slug}`;
 }
 
-function professionSkills(hit: JungleHit): string[] {
-  const names = [
-    hit.new_profession?.pivot_name,
-    hit.new_profession?.sub_category_name,
-  ];
-  return names.filter((name): name is string => Boolean(name?.trim()));
-}
-
 export function toJungleRaw(hit: JungleHit): JungleRaw {
   const description = [hit.summary, hit.profile]
     .filter((part): part is string => Boolean(part))
@@ -128,7 +120,7 @@ export function toJungleRaw(hit: JungleHit): JungleRaw {
     company: { name: hit.organization?.name },
     urls: { show: listingUrl(hit) },
     published_at: hit.published_at,
-    skills: professionSkills(hit),
+    skills: [],
     contract_type: hit.contract_type,
     description,
     workplace_type: hit.remote,
