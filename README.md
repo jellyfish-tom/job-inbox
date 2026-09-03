@@ -1,6 +1,6 @@
 # job-inbox
 
-Private remote-FE job inbox. One authenticated queue of matching remote frontend jobs, refreshed every 2 hours via GitHub Actions.
+remote job inbox. One authenticated queue of matching remote jobs, refreshed every 2 hours via GitHub Actions.
 
 - Design: [docs/superpowers/specs/2026-08-29-job-inbox-design.md](docs/superpowers/specs/2026-08-29-job-inbox-design.md)
 - Plan: [docs/superpowers/plans/2026-08-29-job-inbox.md](docs/superpowers/plans/2026-08-29-job-inbox.md)
