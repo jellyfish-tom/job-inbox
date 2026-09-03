@@ -46,6 +46,7 @@ TURSO_DATABASE_URL=libsql://<db>.turso.io TURSO_AUTH_TOKEN=<token> bun run db:mi
 | --- | --- |
 | `VERCEL_REFRESH_URL` | Absolute refresh endpoint, e.g. `https://<app>.vercel.app/api/refresh` |
 | `REFRESH_SECRET` | Same value as the Vercel env var |
+| `VERCEL_AUTOMATION_BYPASS_SECRET` | Optional. Needed if Vercel Authentication covers Production |
 
 ## Refresh schedule
 

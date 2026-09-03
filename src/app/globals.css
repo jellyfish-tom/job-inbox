@@ -196,6 +196,13 @@ body {
   gap: 1rem;
 }
 
+.job-heading-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
 .job-meta {
   display: block;
   margin-top: 0.25rem;
@@ -310,6 +317,13 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem 1rem;
+}
+
+.inbox-select-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
 .filters-track {

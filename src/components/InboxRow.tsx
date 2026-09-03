@@ -1,9 +1,8 @@
 "use client";
 
-import { Button, Card, Spinner, useConfirmation } from "@proteus-ui/core";
-import { applyJobAction, rejectJobAction } from "@/app/actions/jobs";
+import { Card, Checkbox } from "@proteus-ui/core";
+import { applyJobAction } from "@/app/actions/jobs";
 import { ApplyButton } from "@/components/ApplyButton";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useOfferExit } from "@/hooks/use-offer-exit";
 import type { JobRow } from "@/lib/db/queries";
 import { formatSalary } from "@/lib/salary";
@@ -48,11 +47,23 @@ function RequiredSkills({ skills }: { skills: string[] }) {
   );
 }
 
-export function InboxRow({ job }: { job: JobRow }) {
+export function InboxRow({
+  job,
+  selected,
+  onSelectedChange,
+  exiting,
+  selectDisabled,
+}: {
+  job: JobRow;
+  selected: boolean;
+  onSelectedChange: (selected: boolean) => void;
+  exiting?: boolean;
+  selectDisabled?: boolean;
+}) {
   const salary = formatSalary(job);
   const { phase, which, minWidth, run } = useOfferExit();
-  const confirm = useConfirmation();
   const busy = phase !== "idle";
+  const leaving = exiting || phase === "exiting";
   const hasSkills =
     job.hardRequired.length > 0 ||
     job.hardNice.length > 0 ||
@@ -62,18 +73,26 @@ export function InboxRow({ job }: { job: JobRow }) {
   if (phase === "gone") return null;
 
   return (
-    <li className={`offer-exit${phase === "exiting" ? " offer-exit--out" : ""}`}>
+    <li className={`offer-exit${leaving ? " offer-exit--out" : ""}`}>
       <div className="offer-exit-inner">
         <Card
       title={
         <div className="job-heading">
-          <div>
-            <a href={job.url} target="_blank" rel="noreferrer">
-              {job.title}
-            </a>
-            <span className="job-meta">
-              {job.company} · {job.source}
-            </span>
+          <div className="job-heading-main">
+            <Checkbox
+              checked={selected}
+              disabled={selectDisabled}
+              onCheckedChange={onSelectedChange}
+              aria-label={`Select ${job.title}`}
+            />
+            <div>
+              <a href={job.url} target="_blank" rel="noreferrer">
+                {job.title}
+              </a>
+              <span className="job-meta">
+                {job.company} · {job.source}
+              </span>
+            </div>
           </div>
           <span className="job-salary">{salary}</span>
         </div>
@@ -95,28 +114,6 @@ export function InboxRow({ job }: { job: JobRow }) {
               );
             }}
           />
-          <Button
-            type="button"
-            intent="danger"
-            size="sm"
-            disabled={busy}
-            style={which === "reject" && minWidth != null ? { minWidth } : undefined}
-            onClick={(event) => {
-              const button = event.currentTarget;
-              void confirm.ask().then((ok) => {
-                if (!ok) return;
-                void run(
-                  "reject",
-                  button,
-                  () => rejectJobAction(job.id),
-                  `Rejected ${job.title}`,
-                  `Could not reject ${job.title}`,
-                );
-              });
-            }}
-          >
-            {which === "reject" ? <Spinner size="sm" /> : "Reject"}
-          </Button>
         </div>
       }
     >
@@ -129,15 +126,6 @@ export function InboxRow({ job }: { job: JobRow }) {
         </div>
       ) : null}
         </Card>
-        <ConfirmDialog
-          open={confirm.open}
-          title="Reject this offer?"
-          confirmLabel="Reject"
-          onConfirm={confirm.confirm}
-          onCancel={confirm.cancel}
-        >
-          {job.title}
-        </ConfirmDialog>
       </div>
     </li>
   );

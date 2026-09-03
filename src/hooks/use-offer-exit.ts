@@ -5,7 +5,7 @@ import { useCallback, useState } from "react";
 import { pushToast } from "@/components/Toasts";
 import { errorMessage } from "@/lib/errors";
 
-const EXIT_MS = 280;
+export const OFFER_EXIT_MS = 280;
 
 export function useOfferExit() {
   const router = useRouter();
@@ -34,7 +34,7 @@ export function useOfferExit() {
         const wait = window.matchMedia("(prefers-reduced-motion: reduce)")
           .matches
           ? 0
-          : EXIT_MS;
+          : OFFER_EXIT_MS;
         window.setTimeout(() => {
           setPhase("gone");
           router.refresh();

@@ -15,7 +15,21 @@ jobs:
         env:
           REFRESH_SECRET: ${{ secrets.REFRESH_SECRET }}
           VERCEL_REFRESH_URL: ${{ secrets.VERCEL_REFRESH_URL }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
-          curl -sS -f -X POST \
-            -H "Authorization: Bearer ${REFRESH_SECRET}" \
-            "${VERCEL_REFRESH_URL}?source=${{ matrix.source }}"
+          if [ -z "$VERCEL_REFRESH_URL" ] || [ -z "$REFRESH_SECRET" ]; then
+            echo "Missing Actions secrets: VERCEL_REFRESH_URL and/or REFRESH_SECRET"
+            exit 1
+          fi
+          headers=(-H "Authorization: Bearer ${REFRESH_SECRET}")
+          if [ -n "$VERCEL_AUTOMATION_BYPASS_SECRET" ]; then
+            headers+=(-H "x-vercel-protection-bypass: ${VERCEL_AUTOMATION_BYPASS_SECRET}")
+          fi
+          code=$(curl -sS -o /tmp/refresh-body -w '%{http_code}' -X POST \
+            "${headers[@]}" \
+            "${VERCEL_REFRESH_URL}?source=${{ matrix.source }}")
+          if [ "$code" != "200" ]; then
+            echo "HTTP $code from ${VERCEL_REFRESH_URL}?source=${{ matrix.source }}"
+            head -c 500 /tmp/refresh-body; echo
+            exit 1
+          fi

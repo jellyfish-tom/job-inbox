@@ -58,6 +58,9 @@ Repo → Settings → Secrets and variables → Actions:
 | --- | --- |
 | `VERCEL_REFRESH_URL` | `https://<app>.vercel.app/api/refresh` (absolute, no trailing `?`) |
 | `REFRESH_SECRET` | same value as the Vercel env var |
+| `VERCEL_AUTOMATION_BYPASS_SECRET` | only if Standard Protection covers Production — from Vercel → Settings → Deployment Protection → Protection Bypass for Automation |
+
+Production alias must be reachable by `curl`. If Vercel Authentication is on for Production, `POST /api/refresh` 302s to SSO and the cron never refreshes. Either scope Standard Protection to **Preview only**, or set the bypass secret above.
 
 ## 8. Manual smoke of the refresh workflow
 
