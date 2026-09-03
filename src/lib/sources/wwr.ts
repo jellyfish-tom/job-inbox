@@ -1,4 +1,4 @@
-import type { NormalizedJob, SourceCapabilities, SourceFilter } from "@/types/job";
+import type { NormalizedJob, SourceCapabilities } from "@/types/job";
 import { requireUrl } from "@/lib/url";
 import type { SourceAdapter } from "./types";
 
@@ -104,7 +104,7 @@ export function matchFields(
 export const wwrAdapter: SourceAdapter = {
   source: "wwr",
   capabilities: wwrCapabilities,
-  async fetchListings(_filter: SourceFilter) {
+  async fetchListings() {
     const res = await fetch(LISTINGS_URL, {
       headers: { "User-Agent": "job-inbox/0.1" },
     });

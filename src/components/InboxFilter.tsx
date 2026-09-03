@@ -2,7 +2,7 @@
 
 import { Button, Checkbox, SearchBar, Spinner, useConfirmation } from "@proteus-ui/core";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { rejectJobsAction } from "@/app/actions/jobs";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { InboxRow } from "@/components/InboxRow";
@@ -41,26 +41,6 @@ export function InboxFilter({ jobs }: { jobs: JobRow[] }) {
       ),
     [filtered, hidden],
   );
-
-  useEffect(() => {
-    const live = new Set(jobs.map((job) => job.id));
-    for (const id of [...dismissedInboxIds]) {
-      if (!live.has(id)) dismissedInboxIds.delete(id);
-    }
-    for (const id of [...exitingInboxIds]) {
-      if (!live.has(id)) exitingInboxIds.delete(id);
-    }
-    setHidden((current) => {
-      if (current.size === 0) return current;
-      const next = new Set([...current].filter((id) => live.has(id)));
-      return next.size === current.size ? current : next;
-    });
-    setExiting((current) => {
-      if (current.size === 0) return current;
-      const next = new Set([...current].filter((id) => live.has(id)));
-      return next.size === current.size ? current : next;
-    });
-  }, [jobs]);
 
   const sourceCounts = useMemo(() => {
     const counts = Object.fromEntries(SOURCE_IDS.map((id) => [id, 0])) as Record<
