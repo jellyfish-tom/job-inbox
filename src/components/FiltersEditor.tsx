@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Badge,
-  Button,
-  Checkbox,
-  CollapsibleSection,
-  Spinner,
-  Text,
-  Textarea,
-  TextInput,
-} from "@proteus-ui/core";
+import { Badge, Button, Checkbox, CollapsibleSection, Spinner, TextInput, TextP, TextSpan, Textarea } from "@proteus-ui/core";
 import { useState, useTransition } from "react";
 import { resetFiltersAction, saveFiltersAction } from "@/app/actions/filters";
 import { DEFAULT_SOURCE_FILTERS } from "@/lib/filter-defaults";
@@ -54,23 +45,23 @@ export function FiltersEditor({
 
   const body = (
     <>
-      <Text.P className="filters-hint">
+      <TextP className="filters-hint">
         Fetch fields go to the board. Match fields keep a listing when a
         configured token hits that field. Empty field = no constraint. Missing
         or “any” values pass. Exclude is title, description, and tags only.
-      </Text.P>
+      </TextP>
 
       {capabilities.fields.map((field) => {
         const tokens = values[field.id] ?? [];
         if (field.valueType === "enum" && field.enumValues) {
           return (
             <div key={field.id} className="filters-group">
-              <Text.Span>
+              <TextSpan>
                 {field.label}{" "}
-                <Text.Span className="filters-hint">
+                <TextSpan className="filters-hint">
                   ({fieldHint(field.kind)})
-                </Text.Span>
-              </Text.Span>
+                </TextSpan>
+              </TextSpan>
               <div className="inbox-filter-toggles">
                 {field.enumValues.map((option) => (
                   <Checkbox
@@ -96,12 +87,12 @@ export function FiltersEditor({
         const joined = tokens.join(isSingleLine ? " " : ", ");
         return (
           <div key={field.id} className="filters-group">
-            <Text.Span>
+            <TextSpan>
               {field.label}{" "}
-              <Text.Span className="filters-hint">
+              <TextSpan className="filters-hint">
                 ({fieldHint(field.kind)})
-              </Text.Span>
-            </Text.Span>
+              </TextSpan>
+            </TextSpan>
             {isSingleLine ? (
               <TextInput
                 aria-label={`${source} ${field.label}`}
@@ -127,7 +118,7 @@ export function FiltersEditor({
       })}
 
       <label className="filters-exclude">
-        <Text.Span>Exclude</Text.Span>
+        <TextSpan>Exclude</TextSpan>
         <Textarea
           aria-label={`${source} exclude`}
           value={exclude.join(", ")}
@@ -151,7 +142,7 @@ export function FiltersEditor({
             })
           }
         >
-          <Text.Span>Save</Text.Span>
+          <TextSpan>Save</TextSpan>
         </Button>
         <Button
           type="button"
@@ -165,17 +156,17 @@ export function FiltersEditor({
             });
           }}
         >
-          <Text.Span>Reset to defaults</Text.Span>
+          <TextSpan>Reset to defaults</TextSpan>
         </Button>
         {pending ? <Spinner size="sm" label="Saving" /> : null}
         {status === "saved" && (
           <Badge intent="primary" role="status">
-            <Text.Span>Saved.</Text.Span>
+            <TextSpan>Saved.</TextSpan>
           </Badge>
         )}
         {status === "error" && (
           <Badge intent="danger" role="status">
-            <Text.Span>Save failed — try again.</Text.Span>
+            <TextSpan>Save failed — try again.</TextSpan>
           </Badge>
         )}
       </div>
@@ -186,7 +177,7 @@ export function FiltersEditor({
     <CollapsibleSection classNames={{ root: "filters-track" }}>
       <CollapsibleSection.Item id={source} defaultOpen={false}>
         <CollapsibleSection.Title>
-          <Text.Span>{source}</Text.Span>
+          <TextSpan>{source}</TextSpan>
         </CollapsibleSection.Title>
         <CollapsibleSection.Panel>{body}</CollapsibleSection.Panel>
       </CollapsibleSection.Item>

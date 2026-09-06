@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Button,
-  Checkbox,
-  SearchBar,
-  Spinner,
-  Text,
-  useConfirmation,
-} from "@proteus-ui/core";
+import { Button, Checkbox, SearchBar, Spinner, TextP, TextSpan, useConfirmation } from "@proteus-ui/core";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { rejectJobsAction } from "@/app/actions/jobs";
@@ -183,14 +176,14 @@ export function InboxFilter({ jobs }: { jobs: JobRow[] }) {
               disabled={rejectCount === 0 || rejecting}
               onClick={rejectSelected}
             >
-              {rejecting ? <Spinner size="sm" /> : <Text.Span>Reject</Text.Span>}
+              {rejecting ? <Spinner size="sm" /> : <TextSpan>Reject</TextSpan>}
             </Button>
           </div>
         ) : null}
       </div>
 
       {visible.length === 0 ? (
-        <Text.P className="empty-state">No jobs match.</Text.P>
+        <TextP className="empty-state">No jobs match.</TextP>
       ) : (
         <ul className="job-list">
           {visible.map((job) => (

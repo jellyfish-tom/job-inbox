@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Dialog, KEYBOARD_KEYS, Text } from "@proteus-ui/core";
+import { Button, Dialog, KEYBOARD_KEYS, TextP, TextSpan } from "@proteus-ui/core";
 import { useEffect, type ReactNode } from "react";
 
 export function ConfirmDialog({
@@ -48,19 +48,19 @@ export function ConfirmDialog({
       }}
     >
       <Dialog.Title>
-        <Text.Span>{title}</Text.Span>
+        <TextSpan>{title}</TextSpan>
       </Dialog.Title>
       {children != null ? (
         <Dialog.Body>
-          <Text.P>{children}</Text.P>
+          <TextP>{children}</TextP>
         </Dialog.Body>
       ) : null}
       <Dialog.Actions>
         <Button type="button" size="sm" onClick={onCancel}>
-          <Text.Span>Cancel</Text.Span>
+          <TextSpan>Cancel</TextSpan>
         </Button>
         <Button type="button" intent="danger" size="sm" onClick={onConfirm}>
-          <Text.Span>{confirmLabel}</Text.Span>
+          <TextSpan>{confirmLabel}</TextSpan>
         </Button>
       </Dialog.Actions>
     </Dialog>

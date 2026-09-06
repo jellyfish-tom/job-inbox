@@ -5,6 +5,9 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig = {
   outputFileTracingRoot: root,
+  experimental: {
+    optimizePackageImports: ["@proteus-ui/core"],
+  },
   serverExternalPackages: [
     "@libsql/client",
     "@libsql/hrana-client",

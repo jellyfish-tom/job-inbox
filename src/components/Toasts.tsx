@@ -1,6 +1,6 @@
 "use client";
 
-import { Text } from "@proteus-ui/core";
+import { TextSpan } from "@proteus-ui/core";
 import { useEffect, useState } from "react";
 
 export type ToastKind = "ok" | "error";
@@ -50,7 +50,7 @@ export function Toasts() {
           className={`toast toast--${toast.kind}`}
           role="status"
         >
-          <Text.Span>{toast.message}</Text.Span>
+          <TextSpan>{toast.message}</TextSpan>
         </div>
       ))}
     </div>

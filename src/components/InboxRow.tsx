@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, Checkbox, Semantic, Text } from "@proteus-ui/core";
+import { Card, Checkbox, SemanticDetails, SemanticSummary, TextA, TextP, TextSpan } from "@proteus-ui/core";
 import { applyJobAction } from "@/app/actions/jobs";
 import { ApplyButton } from "@/components/ApplyButton";
 import { useOfferExit } from "@/hooks/use-offer-exit";
@@ -18,18 +18,18 @@ function SkillDetails({
 }) {
   if (skills.length === 0) return null;
   return (
-    <Semantic.Details>
-      <Semantic.Summary>
-        <Text.Span>{label}</Text.Span>
-      </Semantic.Summary>
+    <SemanticDetails>
+      <SemanticSummary>
+        <TextSpan>{label}</TextSpan>
+      </SemanticSummary>
       <ul>
         {skills.map((skill) => (
           <li key={skill}>
-            <Text.Span>{skill}</Text.Span>
+            <TextSpan>{skill}</TextSpan>
           </li>
         ))}
       </ul>
-    </Semantic.Details>
+    </SemanticDetails>
   );
 }
 
@@ -37,21 +37,21 @@ function RequiredSkills({ skills }: { skills: string[] }) {
   if (skills.length === 0) return null;
   const preview = skills.slice(0, REQUIRED_PREVIEW).join(", ");
   if (skills.length <= REQUIRED_PREVIEW) {
-    return <Text.P className="job-requireds">{preview}</Text.P>;
+    return <TextP className="job-requireds">{preview}</TextP>;
   }
   return (
-    <Semantic.Details>
-      <Semantic.Summary>
-        <Text.Span>{preview}</Text.Span>
-      </Semantic.Summary>
+    <SemanticDetails>
+      <SemanticSummary>
+        <TextSpan>{preview}</TextSpan>
+      </SemanticSummary>
       <ul>
         {skills.slice(REQUIRED_PREVIEW).map((skill) => (
           <li key={skill}>
-            <Text.Span>{skill}</Text.Span>
+            <TextSpan>{skill}</TextSpan>
           </li>
         ))}
       </ul>
-    </Semantic.Details>
+    </SemanticDetails>
   );
 }
 
@@ -94,15 +94,15 @@ export function InboxRow({
                   aria-label={`Select ${job.title}`}
                 />
                 <div>
-                  <Text.A href={job.url} target="_blank" rel="noreferrer">
+                  <TextA href={job.url} target="_blank" rel="noreferrer">
                     {job.title}
-                  </Text.A>
-                  <Text.Span className="job-meta">
+                  </TextA>
+                  <TextSpan className="job-meta">
                     {job.company} · {job.source}
-                  </Text.Span>
+                  </TextSpan>
                 </div>
               </div>
-              <Text.Span className="job-salary">{salary}</Text.Span>
+              <TextSpan className="job-salary">{salary}</TextSpan>
             </div>
           </Card.Title>
           {hasSkills ? (

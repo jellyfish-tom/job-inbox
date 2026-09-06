@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, IconButton, Semantic, Spinner, Text, Textarea, useConfirmation } from "@proteus-ui/core";
+import { Card, IconButton, SemanticDetails, SemanticSummary, Spinner, TextA, TextSpan, TextTime, Textarea, useConfirmation } from "@proteus-ui/core";
 import { useEffect, useRef, useState } from "react";
 import { rejectJobAction, saveNotesAction } from "@/app/actions/jobs";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -72,16 +72,16 @@ export function AppliedRow({ job }: { job: JobRow }) {
         <Card>
           <Card.Title>
             <div className="applied-heading">
-              <Text.A href={job.url} target="_blank" rel="noreferrer">
+              <TextA href={job.url} target="_blank" rel="noreferrer">
                 {job.title}
-              </Text.A>
-              <Text.Span className="job-meta">
+              </TextA>
+              <TextSpan className="job-meta">
                 {job.company} · {job.source}
-              </Text.Span>
+              </TextSpan>
               {job.appliedAt ? (
-                <Text.Time dateTime={job.appliedAt} suppressHydrationWarning>
+                <TextTime dateTime={job.appliedAt} suppressHydrationWarning>
                   {`Applied ${new Date(job.appliedAt).toLocaleString()}`}
-                </Text.Time>
+                </TextTime>
               ) : null}
               <IconButton
                 type="button"
@@ -112,21 +112,21 @@ export function AppliedRow({ job }: { job: JobRow }) {
             </div>
           </Card.Title>
           <Card.Body>
-            <Semantic.Details
+            <SemanticDetails
               className="notes-details"
               open={notesOpen}
               onToggle={(event) => setNotesOpen(event.currentTarget.open)}
             >
-              <Semantic.Summary>
-                <Text.Span>Notes</Text.Span>
-              </Semantic.Summary>
+              <SemanticSummary>
+                <TextSpan>Notes</TextSpan>
+              </SemanticSummary>
               <Textarea
                 value={notes}
                 onValueChange={handleNotesChange}
                 rows={3}
                 aria-label="Notes"
               />
-            </Semantic.Details>
+            </SemanticDetails>
           </Card.Body>
         </Card>
         <ConfirmDialog

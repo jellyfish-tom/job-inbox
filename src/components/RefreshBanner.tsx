@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Badge,
-  Button,
-  CollapsibleSection,
-  Spinner,
-  Text,
-  type BadgeIntent,
-} from "@proteus-ui/core";
+import { Badge, Button, CollapsibleSection, Spinner, TextSpan, TextTime, type BadgeIntent } from "@proteus-ui/core";
 import { useState } from "react";
 import { triggerRefresh } from "@/app/actions/refresh";
 import type { RefreshRunRow } from "@/lib/db/queries";
@@ -21,10 +14,10 @@ function RefreshStat({
   label: string;
 }) {
   return (
-    <Text.Span className="refresh-stat">
-      <Text.Span className="refresh-stat-n">{value ?? "–"}</Text.Span>
-      <Text.Span>{` ${label}`}</Text.Span>
-    </Text.Span>
+    <TextSpan className="refresh-stat">
+      <TextSpan className="refresh-stat-n">{value ?? "–"}</TextSpan>
+      <TextSpan>{` ${label}`}</TextSpan>
+    </TextSpan>
   );
 }
 
@@ -51,7 +44,7 @@ export function RefreshBanner({ runs }: { runs: RefreshRunRow[] }) {
     <CollapsibleSection classNames={{ root: "refresh-banner" }}>
       <CollapsibleSection.Item id="sources">
         <CollapsibleSection.Title>
-          <Text.Span>Sources</Text.Span>
+          <TextSpan>Sources</TextSpan>
         </CollapsibleSection.Title>
         <CollapsibleSection.Panel>
           <ul className="refresh-list" aria-label="Refresh status">
@@ -72,22 +65,22 @@ export function RefreshBanner({ runs }: { runs: RefreshRunRow[] }) {
 
               return (
                 <li key={source} className="refresh-row">
-                  <Text.Span className="refresh-source">{source}</Text.Span>
+                  <TextSpan className="refresh-source">{source}</TextSpan>
                   {run ? (
                     <Badge intent={statusIntent(run.status)}>
-                      <Text.Span>{run.status}</Text.Span>
+                      <TextSpan>{run.status}</TextSpan>
                     </Badge>
                   ) : (
                     <Badge>
-                      <Text.Span>never</Text.Span>
+                      <TextSpan>never</TextSpan>
                     </Badge>
                   )}
                   {time ? (
-                    <Text.Time dateTime={time} suppressHydrationWarning>
+                    <TextTime dateTime={time} suppressHydrationWarning>
                       {new Date(time).toLocaleString()}
-                    </Text.Time>
+                    </TextTime>
                   ) : (
-                    <Text.Span className="refresh-time-placeholder" />
+                    <TextSpan className="refresh-time-placeholder" />
                   )}
                   <RefreshStat value={counts?.fetched ?? null} label="fetched" />
                   <RefreshStat value={counts?.inserted ?? null} label="added" />
@@ -112,13 +105,13 @@ export function RefreshBanner({ runs }: { runs: RefreshRunRow[] }) {
                         }
                       }}
                     >
-                      <Text.Span>Refresh</Text.Span>
+                      <TextSpan>Refresh</TextSpan>
                     </Button>
                   </span>
                   {run?.status === "failed" && run.error ? (
-                    <Text.Span className="refresh-error" role="alert">
+                    <TextSpan className="refresh-error" role="alert">
                       {run.error}
-                    </Text.Span>
+                    </TextSpan>
                   ) : null}
                 </li>
               );

@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Semantic, Text, TextInput } from "@proteus-ui/core";
+import { Button, SemanticMain, TextInput, TextP, TextSpan } from "@proteus-ui/core";
 import { useState } from "react";
 import { login } from "./actions";
 
@@ -15,7 +15,7 @@ export default function LoginPage() {
   }
 
   return (
-    <Semantic.Main className="login-page">
+    <SemanticMain className="login-page">
       <form className="login-form" action={handleSubmit}>
         <TextInput
           id="password"
@@ -26,12 +26,12 @@ export default function LoginPage() {
           placeholder="Enter your password"
         />
         <Button type="submit" intent="primary">
-          <Text.Span>Log in</Text.Span>
+          <TextSpan>Log in</TextSpan>
         </Button>
         {error ? (
-          <Text.P role="alert">{error}</Text.P>
+          <TextP role="alert">{error}</TextP>
         ) : null}
       </form>
-    </Semantic.Main>
+    </SemanticMain>
   );
 }
