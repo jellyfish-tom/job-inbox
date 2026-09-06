@@ -1,16 +1,12 @@
 import {
-  Section,
-  SectionBody,
-  SectionTitle,
   SemanticHeader,
   SemanticMain,
   SemanticNav,
   TextA,
   TextH1,
   TextP,
-  TextSpan,
 } from "@proteus-ui/core";
-import { InboxFilter } from "@/components/InboxFilter";
+import { OffersSection } from "@/components/OffersSection";
 import { RefreshBanner } from "@/components/RefreshBanner";
 import { pinnedSearches } from "@/config/pinned-searches";
 import { listInbox, listLatestRuns } from "@/lib/db/queries";
@@ -44,18 +40,7 @@ export default async function Home() {
         <RefreshBanner runs={runs} />
       </SemanticHeader>
 
-      <Section>
-        <SectionTitle>
-          <TextSpan>{`Offers (${jobs.length})`}</TextSpan>
-        </SectionTitle>
-        <SectionBody>
-          {jobs.length === 0 ? (
-            <TextP className="empty-state">No jobs in inbox.</TextP>
-          ) : (
-            <InboxFilter jobs={jobs} />
-          )}
-        </SectionBody>
-      </Section>
+      <OffersSection jobs={jobs} />
     </SemanticMain>
   );
 }
