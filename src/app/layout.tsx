@@ -1,4 +1,4 @@
-import { Button, Semantic, Text } from "@proteus-ui/core";
+import { Button, SemanticNav, TextSpan } from "@proteus-ui/core";
 import "@proteus-ui/tokens/tokens.css";
 import "@proteus-ui/theme-default/tokens.css";
 import "@proteus-ui/core/styles.css";
@@ -22,22 +22,22 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
         {loggedIn ? (
-          <Semantic.Nav className="site-nav" aria-label="Site">
+          <SemanticNav className="site-nav" aria-label="Site">
             <Link href="/">
-              <Text.Span>Inbox</Text.Span>
+              <TextSpan>Inbox</TextSpan>
             </Link>
             <Link href="/applied">
-              <Text.Span>Applied</Text.Span>
+              <TextSpan>Applied</TextSpan>
             </Link>
             <Link href="/filters">
-              <Text.Span>Filters</Text.Span>
+              <TextSpan>Filters</TextSpan>
             </Link>
             <form action={logout}>
               <Button type="submit">
-                <Text.Span>Logout</Text.Span>
+                <TextSpan>Logout</TextSpan>
               </Button>
             </form>
-          </Semantic.Nav>
+          </SemanticNav>
         ) : null}
         {children}
         <Toasts />

@@ -2,5 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "bunVersion": "1.4.x",
+  "installCommand": "git submodule update --init --recursive && bun install",
   "buildCommand": "bun run build"
 }

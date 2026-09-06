@@ -1,4 +1,4 @@
-import { Semantic, Text } from "@proteus-ui/core";
+import { SemanticHeader, SemanticMain, TextH1, TextP } from "@proteus-ui/core";
 import { AppliedRow } from "@/components/AppliedRow";
 import { listApplied } from "@/lib/db/queries";
 
@@ -6,13 +6,13 @@ export default async function AppliedPage() {
   const jobs = await listApplied();
 
   return (
-    <Semantic.Main className="page">
-      <Semantic.Header className="page-header">
-        <Text.H1>{`Applied (${jobs.length})`}</Text.H1>
-      </Semantic.Header>
+    <SemanticMain className="page">
+      <SemanticHeader className="page-header">
+        <TextH1>{`Applied (${jobs.length})`}</TextH1>
+      </SemanticHeader>
 
       {jobs.length === 0 ? (
-        <Text.P className="empty-state">No applied jobs yet.</Text.P>
+        <TextP className="empty-state">No applied jobs yet.</TextP>
       ) : (
         <ul className="job-list">
           {jobs.map((job) => (
@@ -20,6 +20,6 @@ export default async function AppliedPage() {
           ))}
         </ul>
       )}
-    </Semantic.Main>
+    </SemanticMain>
   );
 }

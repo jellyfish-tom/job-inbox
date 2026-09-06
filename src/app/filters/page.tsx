@@ -1,4 +1,4 @@
-import { Semantic, Text } from "@proteus-ui/core";
+import { SemanticHeader, SemanticMain, TextH1, TextP } from "@proteus-ui/core";
 import { FiltersEditor } from "@/components/FiltersEditor";
 import { getAllSourceFilters } from "@/lib/db/queries";
 import { getAdapter } from "@/lib/sources/registry";
@@ -9,14 +9,14 @@ export default async function FiltersPage() {
   try {
     configs = await getAllSourceFilters();
   } catch {
-    return <Text.P>Database unavailable.</Text.P>;
+    return <TextP>Database unavailable.</TextP>;
   }
 
   return (
-    <Semantic.Main className="page">
-      <Semantic.Header className="page-header">
-        <Text.H1>Filters</Text.H1>
-      </Semantic.Header>
+    <SemanticMain className="page">
+      <SemanticHeader className="page-header">
+        <TextH1>Filters</TextH1>
+      </SemanticHeader>
       {SOURCE_IDS.map((source) => (
         <FiltersEditor
           key={source}
@@ -25,6 +25,6 @@ export default async function FiltersPage() {
           initial={configs[source]}
         />
       ))}
-    </Semantic.Main>
+    </SemanticMain>
   );
 }
