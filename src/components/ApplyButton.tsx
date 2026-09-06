@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Spinner } from "@proteus-ui/core";
+import { Button, Spinner, Text } from "@proteus-ui/core";
 
 export function ApplyButton({
   url,
@@ -27,7 +27,7 @@ export function ApplyButton({
         onApply(event.currentTarget);
       }}
     >
-      {pending ? <Spinner size="sm" /> : "Apply"}
+      {pending ? <Spinner size="sm" /> : <Text.Span>Apply</Text.Span>}
     </Button>
   );
 }

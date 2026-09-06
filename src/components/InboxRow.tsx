@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, Checkbox } from "@proteus-ui/core";
+import { Card, Checkbox, Semantic, Text } from "@proteus-ui/core";
 import { applyJobAction } from "@/app/actions/jobs";
 import { ApplyButton } from "@/components/ApplyButton";
 import { useOfferExit } from "@/hooks/use-offer-exit";
@@ -18,14 +18,18 @@ function SkillDetails({
 }) {
   if (skills.length === 0) return null;
   return (
-    <details>
-      <summary>{label}</summary>
+    <Semantic.Details>
+      <Semantic.Summary>
+        <Text.Span>{label}</Text.Span>
+      </Semantic.Summary>
       <ul>
         {skills.map((skill) => (
-          <li key={skill}>{skill}</li>
+          <li key={skill}>
+            <Text.Span>{skill}</Text.Span>
+          </li>
         ))}
       </ul>
-    </details>
+    </Semantic.Details>
   );
 }
 
@@ -33,17 +37,21 @@ function RequiredSkills({ skills }: { skills: string[] }) {
   if (skills.length === 0) return null;
   const preview = skills.slice(0, REQUIRED_PREVIEW).join(", ");
   if (skills.length <= REQUIRED_PREVIEW) {
-    return <p className="job-requireds">{preview}</p>;
+    return <Text.P className="job-requireds">{preview}</Text.P>;
   }
   return (
-    <details>
-      <summary>{preview}</summary>
+    <Semantic.Details>
+      <Semantic.Summary>
+        <Text.Span>{preview}</Text.Span>
+      </Semantic.Summary>
       <ul>
         {skills.slice(REQUIRED_PREVIEW).map((skill) => (
-          <li key={skill}>{skill}</li>
+          <li key={skill}>
+            <Text.Span>{skill}</Text.Span>
+          </li>
         ))}
       </ul>
-    </details>
+    </Semantic.Details>
   );
 }
 
@@ -75,56 +83,57 @@ export function InboxRow({
   return (
     <li className={`offer-exit${leaving ? " offer-exit--out" : ""}`}>
       <div className="offer-exit-inner">
-        <Card
-      title={
-        <div className="job-heading">
-          <div className="job-heading-main">
-            <Checkbox
-              checked={selected}
-              disabled={selectDisabled}
-              onCheckedChange={onSelectedChange}
-              aria-label={`Select ${job.title}`}
-            />
-            <div>
-              <a href={job.url} target="_blank" rel="noreferrer">
-                {job.title}
-              </a>
-              <span className="job-meta">
-                {job.company} · {job.source}
-              </span>
+        <Card>
+          <Card.Title>
+            <div className="job-heading">
+              <div className="job-heading-main">
+                <Checkbox
+                  checked={selected}
+                  disabled={selectDisabled}
+                  onCheckedChange={onSelectedChange}
+                  aria-label={`Select ${job.title}`}
+                />
+                <div>
+                  <Text.A href={job.url} target="_blank" rel="noreferrer">
+                    {job.title}
+                  </Text.A>
+                  <Text.Span className="job-meta">
+                    {job.company} · {job.source}
+                  </Text.Span>
+                </div>
+              </div>
+              <Text.Span className="job-salary">{salary}</Text.Span>
             </div>
-          </div>
-          <span className="job-salary">{salary}</span>
-        </div>
-      }
-      footer={
-        <div className="job-actions">
-          <ApplyButton
-            url={job.url}
-            pending={which === "apply"}
-            disabled={busy}
-            minWidth={which === "apply" ? minWidth : undefined}
-            onApply={(button) => {
-              void run(
-                "apply",
-                button,
-                () => applyJobAction(job.id),
-                `Applied ${job.title}`,
-                `Could not apply ${job.title}`,
-              );
-            }}
-          />
-        </div>
-      }
-    >
-      {hasSkills ? (
-        <div className="job-details">
-          <RequiredSkills skills={job.hardRequired} />
-          <SkillDetails label="Hard nice" skills={job.hardNice} />
-          <SkillDetails label="Soft required" skills={job.softRequired} />
-          <SkillDetails label="Soft nice" skills={job.softNice} />
-        </div>
-      ) : null}
+          </Card.Title>
+          {hasSkills ? (
+            <Card.Body>
+              <div className="job-details">
+                <RequiredSkills skills={job.hardRequired} />
+                <SkillDetails label="Hard nice" skills={job.hardNice} />
+                <SkillDetails label="Soft required" skills={job.softRequired} />
+                <SkillDetails label="Soft nice" skills={job.softNice} />
+              </div>
+            </Card.Body>
+          ) : null}
+          <Card.Footer>
+            <div className="job-actions">
+              <ApplyButton
+                url={job.url}
+                pending={which === "apply"}
+                disabled={busy}
+                minWidth={which === "apply" ? minWidth : undefined}
+                onApply={(button) => {
+                  void run(
+                    "apply",
+                    button,
+                    () => applyJobAction(job.id),
+                    `Applied ${job.title}`,
+                    `Could not apply ${job.title}`,
+                  );
+                }}
+              />
+            </div>
+          </Card.Footer>
         </Card>
       </div>
     </li>

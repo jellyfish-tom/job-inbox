@@ -6,6 +6,7 @@ import {
   Checkbox,
   CollapsibleSection,
   Spinner,
+  Text,
   Textarea,
   TextInput,
 } from "@proteus-ui/core";
@@ -53,21 +54,23 @@ export function FiltersEditor({
 
   const body = (
     <>
-      <p className="filters-hint">
+      <Text.P className="filters-hint">
         Fetch fields go to the board. Match fields keep a listing when a
         configured token hits that field. Empty field = no constraint. Missing
         or “any” values pass. Exclude is title, description, and tags only.
-      </p>
+      </Text.P>
 
       {capabilities.fields.map((field) => {
         const tokens = values[field.id] ?? [];
         if (field.valueType === "enum" && field.enumValues) {
           return (
             <div key={field.id} className="filters-group">
-              <span>
+              <Text.Span>
                 {field.label}{" "}
-                <span className="filters-hint">({fieldHint(field.kind)})</span>
-              </span>
+                <Text.Span className="filters-hint">
+                  ({fieldHint(field.kind)})
+                </Text.Span>
+              </Text.Span>
               <div className="inbox-filter-toggles">
                 {field.enumValues.map((option) => (
                   <Checkbox
@@ -93,10 +96,12 @@ export function FiltersEditor({
         const joined = tokens.join(isSingleLine ? " " : ", ");
         return (
           <div key={field.id} className="filters-group">
-            <span>
+            <Text.Span>
               {field.label}{" "}
-              <span className="filters-hint">({fieldHint(field.kind)})</span>
-            </span>
+              <Text.Span className="filters-hint">
+                ({fieldHint(field.kind)})
+              </Text.Span>
+            </Text.Span>
             {isSingleLine ? (
               <TextInput
                 aria-label={`${source} ${field.label}`}
@@ -122,7 +127,7 @@ export function FiltersEditor({
       })}
 
       <label className="filters-exclude">
-        Exclude
+        <Text.Span>Exclude</Text.Span>
         <Textarea
           aria-label={`${source} exclude`}
           value={exclude.join(", ")}
@@ -146,7 +151,7 @@ export function FiltersEditor({
             })
           }
         >
-          Save
+          <Text.Span>Save</Text.Span>
         </Button>
         <Button
           type="button"
@@ -160,17 +165,17 @@ export function FiltersEditor({
             });
           }}
         >
-          Reset to defaults
+          <Text.Span>Reset to defaults</Text.Span>
         </Button>
         {pending ? <Spinner size="sm" label="Saving" /> : null}
         {status === "saved" && (
           <Badge intent="primary" role="status">
-            Saved.
+            <Text.Span>Saved.</Text.Span>
           </Badge>
         )}
         {status === "error" && (
           <Badge intent="danger" role="status">
-            Save failed — try again.
+            <Text.Span>Save failed — try again.</Text.Span>
           </Badge>
         )}
       </div>
@@ -178,11 +183,13 @@ export function FiltersEditor({
   );
 
   return (
-    <CollapsibleSection
-      classNames={{ root: "filters-track" }}
-      items={[
-        { id: source, title: source, defaultOpen: false, children: body },
-      ]}
-    />
+    <CollapsibleSection classNames={{ root: "filters-track" }}>
+      <CollapsibleSection.Item id={source} defaultOpen={false}>
+        <CollapsibleSection.Title>
+          <Text.Span>{source}</Text.Span>
+        </CollapsibleSection.Title>
+        <CollapsibleSection.Panel>{body}</CollapsibleSection.Panel>
+      </CollapsibleSection.Item>
+    </CollapsibleSection>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Dialog, KEYBOARD_KEYS } from "@proteus-ui/core";
+import { Button, Dialog, KEYBOARD_KEYS, Text } from "@proteus-ui/core";
 import { useEffect, type ReactNode } from "react";
 
 export function ConfirmDialog({
@@ -42,23 +42,27 @@ export function ConfirmDialog({
     <Dialog
       open={open}
       onClose={onCancel}
-      title={title}
       classNames={{
         overlay: "confirm-dialog-overlay",
         panel: "confirm-dialog-panel",
       }}
-      actions={
-        <>
-          <Button type="button" size="sm" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button type="button" intent="danger" size="sm" onClick={onConfirm}>
-            {confirmLabel}
-          </Button>
-        </>
-      }
     >
-      {children}
+      <Dialog.Title>
+        <Text.Span>{title}</Text.Span>
+      </Dialog.Title>
+      {children != null ? (
+        <Dialog.Body>
+          <Text.P>{children}</Text.P>
+        </Dialog.Body>
+      ) : null}
+      <Dialog.Actions>
+        <Button type="button" size="sm" onClick={onCancel}>
+          <Text.Span>Cancel</Text.Span>
+        </Button>
+        <Button type="button" intent="danger" size="sm" onClick={onConfirm}>
+          <Text.Span>{confirmLabel}</Text.Span>
+        </Button>
+      </Dialog.Actions>
     </Dialog>
   );
 }

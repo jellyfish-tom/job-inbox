@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, IconButton, Spinner, Textarea, useConfirmation } from "@proteus-ui/core";
+import { Card, IconButton, Semantic, Spinner, Text, Textarea, useConfirmation } from "@proteus-ui/core";
 import { useEffect, useRef, useState } from "react";
 import { rejectJobAction, saveNotesAction } from "@/app/actions/jobs";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -69,19 +69,19 @@ export function AppliedRow({ job }: { job: JobRow }) {
   return (
     <li className={`offer-exit${phase === "exiting" ? " offer-exit--out" : ""}`}>
       <div className="offer-exit-inner">
-        <Card
-          title={
+        <Card>
+          <Card.Title>
             <div className="applied-heading">
-              <a href={job.url} target="_blank" rel="noreferrer">
+              <Text.A href={job.url} target="_blank" rel="noreferrer">
                 {job.title}
-              </a>
-              <span className="job-meta">
+              </Text.A>
+              <Text.Span className="job-meta">
                 {job.company} · {job.source}
-              </span>
+              </Text.Span>
               {job.appliedAt ? (
-                <time dateTime={job.appliedAt} suppressHydrationWarning>
-                  Applied {new Date(job.appliedAt).toLocaleString()}
-                </time>
+                <Text.Time dateTime={job.appliedAt} suppressHydrationWarning>
+                  {`Applied ${new Date(job.appliedAt).toLocaleString()}`}
+                </Text.Time>
               ) : null}
               <IconButton
                 type="button"
@@ -110,21 +110,24 @@ export function AppliedRow({ job }: { job: JobRow }) {
                 }}
               />
             </div>
-          }
-        >
-          <details
-            className="notes-details"
-            open={notesOpen}
-            onToggle={(event) => setNotesOpen(event.currentTarget.open)}
-          >
-            <summary>Notes</summary>
-            <Textarea
-              value={notes}
-              onValueChange={handleNotesChange}
-              rows={3}
-              aria-label="Notes"
-            />
-          </details>
+          </Card.Title>
+          <Card.Body>
+            <Semantic.Details
+              className="notes-details"
+              open={notesOpen}
+              onToggle={(event) => setNotesOpen(event.currentTarget.open)}
+            >
+              <Semantic.Summary>
+                <Text.Span>Notes</Text.Span>
+              </Semantic.Summary>
+              <Textarea
+                value={notes}
+                onValueChange={handleNotesChange}
+                rows={3}
+                aria-label="Notes"
+              />
+            </Semantic.Details>
+          </Card.Body>
         </Card>
         <ConfirmDialog
           open={confirm.open}

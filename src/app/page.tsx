@@ -1,4 +1,4 @@
-import { Section } from "@proteus-ui/core";
+import { Section, Semantic, Text } from "@proteus-ui/core";
 import { InboxFilter } from "@/components/InboxFilter";
 import { RefreshBanner } from "@/components/RefreshBanner";
 import { pinnedSearches } from "@/config/pinned-searches";
@@ -11,35 +11,40 @@ export default async function Home() {
   try {
     [jobs, runs] = await Promise.all([listInbox(), listLatestRuns()]);
   } catch {
-    return <p>Database unavailable.</p>;
+    return <Text.P>Database unavailable.</Text.P>;
   }
 
   return (
-    <main className="page">
-      <header className="page-header">
-        <h1>Inbox</h1>
-        <nav className="pinned-searches" aria-label="Pinned searches">
+    <Semantic.Main className="page">
+      <Semantic.Header className="page-header">
+        <Text.H1>Inbox</Text.H1>
+        <Semantic.Nav className="pinned-searches" aria-label="Pinned searches">
           {pinnedSearches.map((search) => (
-            <a
+            <Text.A
               key={search.id}
               href={search.href}
               target="_blank"
               rel="noreferrer"
             >
               {search.label}
-            </a>
+            </Text.A>
           ))}
-        </nav>
+        </Semantic.Nav>
         <RefreshBanner runs={runs} />
-      </header>
+      </Semantic.Header>
 
-      <Section title={`Offers (${jobs.length})`}>
-        {jobs.length === 0 ? (
-          <p className="empty-state">No jobs in inbox.</p>
-        ) : (
-          <InboxFilter jobs={jobs} />
-        )}
+      <Section>
+        <Section.Title>
+          <Text.Span>{`Offers (${jobs.length})`}</Text.Span>
+        </Section.Title>
+        <Section.Body>
+          {jobs.length === 0 ? (
+            <Text.P className="empty-state">No jobs in inbox.</Text.P>
+          ) : (
+            <InboxFilter jobs={jobs} />
+          )}
+        </Section.Body>
       </Section>
-    </main>
+    </Semantic.Main>
   );
 }
