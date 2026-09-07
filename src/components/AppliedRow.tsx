@@ -1,6 +1,18 @@
 "use client";
 
-import { Card, IconButton, SemanticDetails, SemanticSummary, Spinner, TextA, TextSpan, TextTime, Textarea, useConfirmation } from "@proteus-ui/core";
+import {
+  Card,
+  IconButton,
+  SemanticDetails,
+  SemanticSummary,
+  Spinner,
+  TextA,
+  TextH4,
+  TextSpan,
+  TextTime,
+  Textarea,
+  useConfirmation,
+} from "@proteus-ui/core";
 import { useEffect, useRef, useState } from "react";
 import { rejectJobAction, saveNotesAction } from "@/app/actions/jobs";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -67,14 +79,18 @@ export function AppliedRow({ job }: { job: JobRow }) {
   if (phase === "gone") return null;
 
   return (
-    <li className={`offer-exit${phase === "exiting" ? " offer-exit--out" : ""}`}>
+    <li
+      className={`offer-exit${phase === "exiting" ? " offer-exit--out" : ""}`}
+    >
       <div className="offer-exit-inner">
         <Card>
           <Card.Title>
             <div className="applied-heading">
-              <TextA href={job.url} target="_blank" rel="noreferrer">
-                {job.title}
-              </TextA>
+              <TextH4>
+                <TextA href={job.url} target="_blank" rel="noreferrer">
+                  {job.title}
+                </TextA>
+              </TextH4>
               <TextSpan className="job-meta">
                 {job.company} · {job.source}
               </TextSpan>

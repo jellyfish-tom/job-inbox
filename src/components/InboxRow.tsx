@@ -1,6 +1,15 @@
 "use client";
 
-import { Card, Checkbox, SemanticDetails, SemanticSummary, TextA, TextP, TextSpan } from "@proteus-ui/core";
+import {
+  Card,
+  Checkbox,
+  SemanticDetails,
+  SemanticSummary,
+  Text,
+  TextA,
+  TextP,
+  TextSpan,
+} from "@proteus-ui/core";
 import { applyJobAction } from "@/app/actions/jobs";
 import { ApplyButton } from "@/components/ApplyButton";
 import { useOfferExit } from "@/hooks/use-offer-exit";
@@ -9,13 +18,7 @@ import { formatSalary } from "@/lib/salary";
 
 const REQUIRED_PREVIEW = 5;
 
-function SkillDetails({
-  label,
-  skills,
-}: {
-  label: string;
-  skills: string[];
-}) {
+function SkillDetails({ label, skills }: { label: string; skills: string[] }) {
   if (skills.length === 0) return null;
   return (
     <SemanticDetails>
@@ -93,14 +96,14 @@ export function InboxRow({
                   onCheckedChange={onSelectedChange}
                   aria-label={`Select ${job.title}`}
                 />
-                <div>
+                <Text.H3>
                   <TextA href={job.url} target="_blank" rel="noreferrer">
                     {job.title}
                   </TextA>
-                  <TextSpan className="job-meta">
-                    {job.company} · {job.source}
-                  </TextSpan>
-                </div>
+                </Text.H3>
+                <TextSpan className="job-meta">
+                  {job.company} · {job.source}
+                </TextSpan>
               </div>
               <TextSpan className="job-salary">{salary}</TextSpan>
             </div>
